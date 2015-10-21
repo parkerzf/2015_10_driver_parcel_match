@@ -6,7 +6,7 @@ import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * The class to record Parcel Config object
@@ -18,6 +18,8 @@ public class ParcelConfig {
     private static final Logger logger = LoggerFactory.getLogger(ParcelConfig.class);
 
     private HashMap<Integer, Parcel> parcelMap;
+    private PriorityQueue<Parcel> parcelPriorityQueue;
+    private ArrayList<Parcel> parcelSortedList;
 
     public ParcelConfig(int numParcels, ExcelHandler excelHandler) {
 
@@ -30,16 +32,24 @@ public class ParcelConfig {
         String[] volumeArray = excelHandler.xlsread("Input", 18, 1, numParcels);
 
         parcelMap = new HashMap<Integer, Parcel>(numParcels);
+        parcelPriorityQueue = new PriorityQueue<Parcel>(numParcels);
+        parcelSortedList = new ArrayList<Parcel>(numParcels);
+
         for(int i =0; i < numParcels; i++){
-            parcelMap.put(Integer.parseInt(idStrArray[i]),
-                    new Parcel(Integer.parseInt(idStrArray[i]),
-                            startStationArray[i], endStationArray[i],
-                            Integer.parseInt(earliestDepartureArray[i]),
-                            Integer.parseInt(latestArrivalArray[i]),
-                            Double.parseDouble(costArray[i]),
-                            Integer.parseInt(volumeArray[i])));
+            Parcel parcel = new Parcel(Integer.parseInt(idStrArray[i]),
+                    startStationArray[i], endStationArray[i],
+                    Integer.parseInt(earliestDepartureArray[i]),
+                    Integer.parseInt(latestArrivalArray[i]),
+                    Double.parseDouble(costArray[i]),
+                    Integer.parseInt(volumeArray[i]));
+            parcelMap.put(Integer.parseInt(idStrArray[i]),parcel);
+            parcelPriorityQueue.offer(parcel);
+            parcelSortedList.add(parcel);
             logger.debug(parcelMap.get(Integer.parseInt(idStrArray[i])).toString());
         }
+        Collections.sort(parcelSortedList);
 
+        logger.debug("Parcel sort list size: {}.", parcelSortedList.size());
+        logger.debug("The most costly parcel: {}.", parcelSortedList.get(0));
     }
 }

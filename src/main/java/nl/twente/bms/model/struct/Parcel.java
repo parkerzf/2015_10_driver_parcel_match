@@ -6,7 +6,7 @@ package nl.twente.bms.model.struct;
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
  */
-public class Parcel {
+public class Parcel implements Comparable<Parcel> {
 
     private int id;
     private String startStationName;
@@ -32,5 +32,10 @@ public class Parcel {
     public String toString(){
         return String.format("Parcel[%d]: %s->%s, (%d, %d), $%.2f, %d", id, startStationName, endStationName,
                 earliestDepartureTime, latestArrivalTime, shippingCompanyCost, volume);
+    }
+
+    public int compareTo(Parcel p) {
+        // order parcel in desc order
+        return Double.compare(p.shippingCompanyCost, shippingCompanyCost);
     }
 }
