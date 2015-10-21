@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true">
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>TRACE</level>
+        </filter>
+
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} | %-5level | %-20logger{0} | %msg%n</pattern>
+        </encoder>
+
+        <file>log/driver_parcel_match.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>log/driver_parcel_match_%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>8</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder>
+            <pattern>%-5level | %-20logger{0} | %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="nl.twente.bms" level="all"/>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
+
