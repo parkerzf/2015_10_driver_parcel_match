@@ -1,6 +1,5 @@
 package nl.twente.bms.model.conf;
 
-import nl.twente.bms.model.struct.Driver;
 import nl.twente.bms.model.struct.Parcel;
 import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
@@ -18,7 +17,6 @@ public class ParcelConfig {
     private static final Logger logger = LoggerFactory.getLogger(ParcelConfig.class);
 
     private HashMap<Integer, Parcel> parcelMap;
-    private PriorityQueue<Parcel> parcelPriorityQueue;
     private ArrayList<Parcel> parcelSortedList;
 
     public ParcelConfig(int numParcels, ExcelHandler excelHandler) {
@@ -32,7 +30,6 @@ public class ParcelConfig {
         String[] volumeArray = excelHandler.xlsread("Input", 18, 1, numParcels);
 
         parcelMap = new HashMap<Integer, Parcel>(numParcels);
-        parcelPriorityQueue = new PriorityQueue<Parcel>(numParcels);
         parcelSortedList = new ArrayList<Parcel>(numParcels);
 
         for(int i =0; i < numParcels; i++){
@@ -43,7 +40,6 @@ public class ParcelConfig {
                     Double.parseDouble(costArray[i]),
                     Integer.parseInt(volumeArray[i]));
             parcelMap.put(Integer.parseInt(idStrArray[i]),parcel);
-            parcelPriorityQueue.offer(parcel);
             parcelSortedList.add(parcel);
             logger.debug(parcelMap.get(Integer.parseInt(idStrArray[i])).toString());
         }
