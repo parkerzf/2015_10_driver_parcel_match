@@ -1,4 +1,5 @@
-package nl.twente.bms.model.conf;
+package nl.twente.bms.model;
+
 
 import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.conf.ParcelConfig;
@@ -7,22 +8,28 @@ import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+
 /**
- * The class to store the configuration of the matching problem read from the excel
+ * The class to store the configuration/status of the matching model read from the excel
  *
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
  */
-public class Configuration {
-    private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
+public class MatchingModel {
 
-    private int Id;
+    private static final Logger logger = LoggerFactory.getLogger(MatchingModel.class);
+
+    private int id;
     /**
      * Problem size configs
      */
     private int numStations;
     private int numDrivers;
     private int numParcels;
+
+    private HashMap<String, Integer> stationNameIndexMap;
+
     /**
      * Complex configurations
      */
@@ -40,14 +47,23 @@ public class Configuration {
     private double weightArrivalTime;
     private double weightExtraTime;
 
-    public Configuration(String confFilePath){
+    public MatchingModel(){
+    }
+
+    public void load(String confFilePath){
         ExcelHandler excelHandler = new ExcelHandler(confFilePath);
-        Id = Integer.parseInt(excelHandler.xlsread("Input", 1, 16));
+        id = Integer.parseInt(excelHandler.xlsread("Input", 1, 16));
         numStations = Integer.parseInt(excelHandler.xlsread("Input", 1, 2));
         numDrivers = Integer.parseInt(excelHandler.xlsread("Input", 1, 0));
         numParcels = Integer.parseInt(excelHandler.xlsread("Input", 1, 3));
 
-        logger.debug( "Id: {}", Id);
+        String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
+        stationNameIndexMap = new HashMap<String, Integer>(numStations);
+        for(int i = 0; i < stationNames.length; i++) {
+            stationNameIndexMap.put(stationNames[i], i+1);
+        }
+
+        logger.debug( "id: {}", id);
         logger.debug( "numStations: {}", numStations);
         logger.debug( "numDrivers: {}", numDrivers);
         logger.debug( "numParcels: {}", numParcels);
@@ -68,10 +84,65 @@ public class Configuration {
         logger.debug( "weightExtraTime: {}", weightExtraTime);
 
         stationConfig = new StationConfig(numStations, excelHandler);
-        driverConfig = new DriverConfig(numDrivers, excelHandler);
-        parcelConfig = new ParcelConfig(numParcels, excelHandler);
+        driverConfig = new DriverConfig(numDrivers, excelHandler, stationNameIndexMap, stationConfig.getStationGrph());
+        parcelConfig = new ParcelConfig(numParcels, excelHandler, stationNameIndexMap);
 
         excelHandler.close();
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public int getNumStations() {
+        return numStations;
+    }
+
+    public int getNumDrivers() {
+        return numDrivers;
+    }
+
+    public int getNumParcels() {
+        return numParcels;
+    }
+
+    public HashMap<String, Integer> getStationNameIndexMap() {
+        return stationNameIndexMap;
+    }
+
+    public StationConfig getStationConfig() {
+        return stationConfig;
+    }
+
+    public DriverConfig getDriverConfig() {
+        return driverConfig;
+    }
+
+    public ParcelConfig getParcelConfig() {
+        return parcelConfig;
+    }
+
+    public double getWeightTravelTime() {
+        return weightTravelTime;
+    }
+
+    public double getWeightNumParcelTransfer() {
+        return weightNumParcelTransfer;
+    }
+
+    public double getWeightShippingCost() {
+        return weightShippingCost;
+    }
+
+    public double getWeightWaitingTime() {
+        return weightWaitingTime;
+    }
+
+    public double getWeightArrivalTime() {
+        return weightArrivalTime;
+    }
+
+    public double getWeightExtraTime() {
+        return weightExtraTime;
+    }
 }

@@ -1,4 +1,4 @@
-package nl.twente.bms.model.struct;
+package nl.twente.bms.model.elem;
 
 /**
  * The class to store the Parcel object
@@ -9,8 +9,8 @@ package nl.twente.bms.model.struct;
 public class Parcel implements Comparable<Parcel> {
 
     private int id;
-    private String startStationName;
-    private String endStationName;
+    private int startStationId;
+    private int endStationId;
 
     private int earliestDepartureTime;
     private int latestArrivalTime;
@@ -18,11 +18,11 @@ public class Parcel implements Comparable<Parcel> {
     private double shippingCompanyCost;
     private int volume;
 
-    public Parcel(int id, String startStationName, String endStationName,
+    public Parcel(int id, int startStationId, int endStationId,
                   int earliestDepartureTime, int latestArrivalTime, double shippingCompanyCost, int volume){
         this.id = id;
-        this.startStationName = startStationName;
-        this.endStationName = endStationName;
+        this.startStationId = startStationId;
+        this.endStationId = endStationId;
         this.earliestDepartureTime = earliestDepartureTime;
         this.latestArrivalTime = latestArrivalTime;
         this.shippingCompanyCost = shippingCompanyCost;
@@ -30,7 +30,7 @@ public class Parcel implements Comparable<Parcel> {
     }
 
     public String toString(){
-        return String.format("Parcel[%d]: %s->%s, (%d, %d), $%.2f, %d", id, startStationName, endStationName,
+        return String.format("Parcel[%d]: %d->%d, (%d, %d), $%.2f, %d", id, startStationId, endStationId,
                 earliestDepartureTime, latestArrivalTime, shippingCompanyCost, volume);
     }
 

@@ -1,13 +1,14 @@
 package nl.twente.bms.model.conf;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import nl.twente.bms.model.struct.Station;
+import grph.properties.Property;
+import grph.properties.StringProperty;
+import nl.twente.bms.algo.struct.WeightedGrph;
 import nl.twente.bms.utils.ExcelHandler;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+
 
 /**
  * The class to record Station Config object
@@ -18,39 +19,31 @@ import org.slf4j.LoggerFactory;
 public class StationConfig {
     private static final Logger logger = LoggerFactory.getLogger(StationConfig.class);
 
-    private Table<String, String, Integer> directDistanceTable;
-    private SimpleWeightedGraph<Station, DefaultWeightedEdge> stationGraph;
 
-    public StationConfig(int numStations, ExcelHandler excelHandler) {
-        directDistanceTable = createStationDirectDistanceTable(numStations, excelHandler);
-        stationGraph = createStationGraph(numStations, excelHandler);
+    private WeightedGrph stationGrph;
+
+    public StationConfig(int numStations, ExcelHandler excelHandler) {;
+        stationGrph = createStationGrph(numStations, excelHandler);
     }
 
-    private Table<String, String, Integer> createStationDirectDistanceTable(int numStations, ExcelHandler excelHandler){
-        Table<String, String, Integer> distanceTable = HashBasedTable.create();
+    private WeightedGrph createStationGrph(int numStations,
+                                           ExcelHandler excelHandler) {
+        ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
 
-        String[] stationNames = excelHandler.xlsread("Direct Distance", 0, 1, numStations);
+        WeightedGrph g = new WeightedGrph();
+        Property vLabel = new StringProperty("Label");
+        String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
+        for(int i = 0; i < numStations; i ++ ){
+            g.addVertex(i+1);
+            vLabel.setValue(i+1, stationNames[i]);
+        }
 
         for(int col = 1; col < numStations + 1; col++ ){
             for(int row = 1; row < numStations +1; row++){
                 int distance = Integer.parseInt(excelHandler.xlsread("Direct Distance", col, row));
-                distanceTable.put(stationNames[col-1], stationNames[row-1], distance);
-                logger.debug("{} <> {}: {}", stationNames[col-1], stationNames[row-1], distance);
+                g.setDirectDistance(col, row, distance);
+                logger.debug("{} <> {}: {}", col, row, distance);
             }
-        }
-
-        return distanceTable;
-    }
-
-    private SimpleWeightedGraph<Station, DefaultWeightedEdge> createStationGraph(int numStations, ExcelHandler excelHandler){
-        SimpleWeightedGraph<Station, DefaultWeightedEdge> graph =
-                new SimpleWeightedGraph<Station, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-
-        String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
-        Station[] stationArray = new Station[numStations];
-        for(int i = 0; i < stationNames.length; i++){
-            stationArray[i] = new Station(stationNames[i]);
-            graph.addVertex(stationArray[i]);
         }
 
         for(int col = 1; col < numStations + 1; col++ ){
@@ -58,13 +51,18 @@ public class StationConfig {
                 int distance = Integer.parseInt(excelHandler.xlsread("Distance", col, row));
                 // distance != 0 means that two stations have an edge
                 if(distance != 0){
-                    DefaultWeightedEdge edge = graph.addEdge(stationArray[col-1], stationArray[row-1]);
-                    graph.setEdgeWeight(edge, distance);
-                    logger.debug("{} <> {}: {}", stationNames[col - 1], stationNames[row - 1], distance);
+                    int e = g.addUndirectedSimpleEdge(col, row);
+                    g.setEdgeWeight(e, distance);
+                    logger.debug("{} <> {}: {}", col, row, g.getEdgeWeight(e));
                 }
             }
         }
+        g.setVerticesLabel(vLabel);
 
-        return graph;
+        return g;
+    }
+
+    public WeightedGrph getStationGrph() {
+        return stationGrph;
     }
 }

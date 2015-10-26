@@ -1,6 +1,4 @@
-package nl.twente.bms.model.struct;
-
-import nl.twente.bms.utils.ExcelHandler;
+package nl.twente.bms.model.elem;
 
 /**
  * The class to store the Station object

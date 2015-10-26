@@ -1,10 +1,14 @@
 package nl.twente.bms.model.conf;
 
-import nl.twente.bms.model.struct.Driver;
+import com.carrotsearch.hppc.*;
+import nl.twente.bms.algo.struct.WeightedGrph;
+import nl.twente.bms.algo.struct.WeightedSmartPath;
+import nl.twente.bms.model.elem.Driver;
 import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -19,9 +23,10 @@ public class DriverConfig {
     private double maxDetour;
     private double avgSpeed;
 
-    private HashMap<Integer, Driver> driverMap;
+    private IntObjectMap<Driver> driverMap;
 
-    public DriverConfig(int numStations, ExcelHandler excelHandler) {
+    public DriverConfig(int numStations, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
+                        WeightedGrph stationGrph) {
 
         maxDetour = Double.parseDouble(excelHandler.xlsread("Input", 1, 1));
         avgSpeed = Double.parseDouble(excelHandler.xlsread("Input", 1, 4));
@@ -36,16 +41,31 @@ public class DriverConfig {
         String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numStations);
         String[] capacityArray = excelHandler.xlsread("Input", 10, 1, numStations);
 
-        driverMap = new HashMap<Integer, Driver>(numStations);
+        //index driver object in driver map
+        driverMap = new IntObjectOpenHashMap<Driver>(numStations);
         for(int i =0; i < numStations; i++){
-            driverMap.put(Integer.parseInt(idStrArray[i]),
-                    new Driver(Integer.parseInt(idStrArray[i]),
-                            startStationArray[i], endStationArray[i],
-                            Integer.parseInt(earliestDepartureArray[i]),
-                            Integer.parseInt(latestArrivalArray[i]),
-                            Integer.parseInt(capacityArray[i])));
-            logger.debug(driverMap.get(Integer.parseInt(idStrArray[i])).toString());
+            Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
+                    stationNameIndexMap.get(startStationArray[i]),
+                    stationNameIndexMap.get(endStationArray[i]),
+                    Integer.parseInt(earliestDepartureArray[i]),
+                    Integer.parseInt(latestArrivalArray[i]),
+                    Integer.parseInt(capacityArray[i]));
+
+            setMaxDetourPaths(driver, stationGrph);
+            driverMap.put(Integer.parseInt(idStrArray[i]), driver);
+            logger.debug(driver.toString());
         }
 
+    }
+
+    /**
+     * Assign max detour paths for all the drivers
+     * @param driver The driver to compute the max detour
+     * @param stationGrph The station graph to search for the max detour paths
+     */
+    private void setMaxDetourPaths(Driver driver, WeightedGrph stationGrph){
+        Collection<WeightedSmartPath> maxDetourPaths = stationGrph.getMaxDetourPaths(driver.getStartStationId(),
+                driver.getEndStationId(), maxDetour);
+        driver.setMaxDetourPaths(maxDetourPaths);
     }
 }
