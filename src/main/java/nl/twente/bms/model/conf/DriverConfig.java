@@ -25,7 +25,7 @@ public class DriverConfig {
 
     private IntObjectMap<Driver> driverMap;
 
-    public DriverConfig(int numStations, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
+    public DriverConfig(int numDrivers, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
                         WeightedGrph stationGrph) {
 
         maxDetour = Double.parseDouble(excelHandler.xlsread("Input", 1, 1));
@@ -34,16 +34,16 @@ public class DriverConfig {
         logger.debug( "maxDetour: {}", maxDetour);
         logger.debug( "avgSpeed: {}", avgSpeed);
 
-        String[] idStrArray = excelHandler.xlsread("Input", 3, 1, numStations);
-        String[] startStationArray = excelHandler.xlsread("Input", 4, 1, numStations);
-        String[] endStationArray = excelHandler.xlsread("Input", 5, 1, numStations);
-        String[] earliestDepartureArray = excelHandler.xlsread("Input", 7, 1, numStations);
-        String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numStations);
-        String[] capacityArray = excelHandler.xlsread("Input", 10, 1, numStations);
+        String[] idStrArray = excelHandler.xlsread("Input", 3, 1, numDrivers);
+        String[] startStationArray = excelHandler.xlsread("Input", 4, 1, numDrivers);
+        String[] endStationArray = excelHandler.xlsread("Input", 5, 1, numDrivers);
+        String[] earliestDepartureArray = excelHandler.xlsread("Input", 7, 1, numDrivers);
+        String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numDrivers);
+        String[] capacityArray = excelHandler.xlsread("Input", 10, 1, numDrivers);
 
         //index driver object in driver map
-        driverMap = new IntObjectOpenHashMap<Driver>(numStations);
-        for(int i =0; i < numStations; i++){
+        driverMap = new IntObjectOpenHashMap<Driver>(numDrivers);
+        for(int i =0; i < numDrivers; i++){
             Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
                     stationNameIndexMap.get(startStationArray[i]),
                     stationNameIndexMap.get(endStationArray[i]),
@@ -59,7 +59,7 @@ public class DriverConfig {
     }
 
     /**
-     * Assign max detour paths for all the drivers
+     * Assign max detour paths for each driver
      * @param driver The driver to compute the max detour
      * @param stationGrph The station graph to search for the max detour paths
      */
