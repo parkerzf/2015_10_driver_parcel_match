@@ -1,7 +1,7 @@
 package nl.twente.bms.algo;
 
 import grph.path.Path;
-import nl.twente.bms.algo.struct.WeightedGrph;
+import nl.twente.bms.algo.struct.StationGraph;
 import nl.twente.bms.algo.struct.WeightedSmartPath;
 
 import java.util.Collection;
@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public class Benchmark {
     public static void main(String args[]){
-        WeightedGrph g = new WeightedGrph();
+        StationGraph g = new StationGraph();
         g.addVertex(1);
         g.addVertex(2);
         g.addVertex(3);
@@ -39,5 +39,4 @@ public class Benchmark {
 
         g.display();
     }
-
 }

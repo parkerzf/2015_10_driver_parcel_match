@@ -14,23 +14,29 @@ import java.util.Collection;
 public class Driver {
 
     private int id;
-    private int startStationId;
-    private int endStationId;
+    private int source;
+    private int target;
 
-    private int earliestDepartureTime;
-    private int latestArrivalTime;
+    private double epsilon; // detour threshold
+    private double gamma; // delay threshold
+
+    private int departureTime;
+    private int holdDuration; // longest hold parcel duration
+
+    private double speed;
 
     private int capacity;
 
-    private Collection<WeightedSmartPath> maxDetourPaths;
-
-    public Driver(int id, int startStationId, int endStationId,
-                  int earliestDepartureTime, int latestArrivalTime, int capacity) {
+    public Driver(int id, int source, int target, double epsilon, double gamma,
+                  int departureTime, int holdDuration, double speed, int capacity) {
         this.id = id;
-        this.startStationId = startStationId;
-        this.endStationId = endStationId;
-        this.earliestDepartureTime = earliestDepartureTime;
-        this.latestArrivalTime = latestArrivalTime;
+        this.source = source;
+        this.target = target;
+        this.epsilon = epsilon;
+        this.gamma = gamma;
+        this.departureTime = departureTime;
+        this.holdDuration = holdDuration;
+        this.speed = speed;
         this.capacity = capacity;
     }
 
@@ -38,37 +44,48 @@ public class Driver {
         return id;
     }
 
-    public int getStartStationId() {
-        return startStationId;
+    public int getSource() {
+        return source;
     }
 
-    public int getEndStationId() {
-        return endStationId;
+    public int getTarget() {
+        return target;
     }
 
-    public int getEarliestDepartureTime() {
-        return earliestDepartureTime;
+    public double getEpsilon() {
+        return epsilon;
     }
 
-    public int getLatestArrivalTime() {
-        return latestArrivalTime;
+    public double getGamma() {
+        return gamma;
+    }
+
+    public int getDepartureTime() {
+        return departureTime;
+    }
+
+    public int getHoldDuration() {
+        return holdDuration;
+    }
+
+    public double getSpeed() {
+        return speed;
     }
 
     public int getCapacity() {
         return capacity;
     }
 
-    public Collection<WeightedSmartPath> getMaxDetourPaths() {
-        return maxDetourPaths;
+    public int getArrivalTimeFromSource(int distance){
+        return departureTime + (int)(distance * 60/speed);
     }
-
-    public void setMaxDetourPaths(Collection<WeightedSmartPath> maxDetourPaths) {
-        this.maxDetourPaths = maxDetourPaths;
-    }
-
 
     public String toString(){
-        return String.format("Driver[%d]: %d->%d, #Paths: %d, (%d, %d), %d", id, startStationId, endStationId,
-                maxDetourPaths.size(), earliestDepartureTime, latestArrivalTime, capacity);
+        return String.format("Driver[%d]: %d->%d, Detour: %.2f, Delay: %.2f, Departure: %d, Hold: %d, Speed: %.2f, Capacity: %d",
+                id, source, target, epsilon, gamma, departureTime, holdDuration, speed, capacity);
+    }
+
+    public int getDuration(int distance) {
+        return (int)(distance * 60/speed);
     }
 }

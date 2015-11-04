@@ -84,7 +84,7 @@ public class MatchingModel {
         logger.debug( "weightExtraTime: {}", weightExtraTime);
 
         stationConfig = new StationConfig(numStations, excelHandler);
-        driverConfig = new DriverConfig(numDrivers, excelHandler, stationNameIndexMap, stationConfig.getStationGrph());
+        driverConfig = new DriverConfig(numDrivers, excelHandler, stationNameIndexMap, stationConfig.getStationGraph());
         parcelConfig = new ParcelConfig(numParcels, excelHandler, stationNameIndexMap);
 
         excelHandler.close();

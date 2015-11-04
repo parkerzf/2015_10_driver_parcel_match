@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * The class to record Parcel Config object
+ * The class to record parcel config
  *
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
