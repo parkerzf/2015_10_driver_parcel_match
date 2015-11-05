@@ -1,10 +1,6 @@
 package nl.twente.bms.model.elem;
 
 
-import nl.twente.bms.algo.struct.WeightedSmartPath;
-
-import java.util.Collection;
-
 /**
  * The class to store the Drive object
  *
@@ -76,16 +72,16 @@ public class Driver {
         return capacity;
     }
 
-    public int getArrivalTimeFromSource(int distance){
-        return departureTime + (int)(distance * 60/speed);
+    public int getArrivalTimeFromSource(int distance) {
+        return departureTime + (int) (distance * 60 / speed);
     }
 
-    public String toString(){
+    public String toString() {
         return String.format("Driver[%d]: %d->%d, Detour: %.2f, Delay: %.2f, Departure: %d, Hold: %d, Speed: %.2f, Capacity: %d",
                 id, source, target, epsilon, gamma, departureTime, holdDuration, speed, capacity);
     }
 
     public int getDuration(int distance) {
-        return (int)(distance * 60/speed);
+        return (int) (distance * 60 / speed);
     }
 }

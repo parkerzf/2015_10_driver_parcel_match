@@ -10,7 +10,7 @@ import java.util.Collection;
  * Created by zhaofeng on 10/21/15.
  */
 public class Benchmark {
-    public static void main(String args[]){
+    public static void main(String args[]) {
         StationGraph g = new StationGraph();
         g.addVertex(1);
         g.addVertex(2);

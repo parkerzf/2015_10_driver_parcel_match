@@ -30,7 +30,7 @@ public class MaxDetourPaths extends GrphAlgorithm<Collection<Path>> {
     }
 
     public Collection<WeightedSmartPath> compute(Grph grph, int source, int destination, double maxWeight) {
-        assert maxWeight >=0: "maxLen: "+ maxWeight +" is less than 0";
+        assert maxWeight >= 0 : "maxLen: " + maxWeight + " is less than 0";
 
         ArrayList<WeightedSmartPath> pathList = new ArrayList<WeightedSmartPath>();
         WeightedSmartPath currentPath = new WeightedSmartPath();
@@ -43,15 +43,14 @@ public class MaxDetourPaths extends GrphAlgorithm<Collection<Path>> {
 
 
     private void DFS(Grph grph, int currentVertex, int destination, double remainingWeight,
-                     WeightedSmartPath currentPath, ArrayList<WeightedSmartPath> pathList){
+                     WeightedSmartPath currentPath, ArrayList<WeightedSmartPath> pathList) {
 
-        if(currentVertex == destination){
+        if (currentVertex == destination) {
             WeightedSmartPath clonedPath = (WeightedSmartPath) currentPath.clone();
             pathList.add(clonedPath);
-        }
-        else{
+        } else {
             Iterator<IntCursor> iter = grph.getOutEdges(currentVertex).iterator();
-            while(iter.hasNext()){
+            while (iter.hasNext()) {
                 int edge = iter.next().value;
                 int edgeWeight = weightProperty.getValueAsInt(edge);
                 int neighbor = grph.getTheOtherVertex(edge, currentVertex);
@@ -59,9 +58,9 @@ public class MaxDetourPaths extends GrphAlgorithm<Collection<Path>> {
                 boolean noDirectDistance = directDistanceTable.get(neighbor, destination) == null;
 
                 double newRemainingWeight = remainingWeight - edgeWeight;
-                if(newRemainingWeight >= 0
+                if (newRemainingWeight >= 0
                         && (noDirectDistance || directDistanceTable.get(neighbor, destination) <= newRemainingWeight)
-                        && !currentPath.containsVertex(neighbor)){
+                        && !currentPath.containsVertex(neighbor)) {
                     currentPath.extend(edge, neighbor, edgeWeight);
                     DFS(grph, neighbor, destination, newRemainingWeight, currentPath, pathList);
                     currentPath.removeLast();

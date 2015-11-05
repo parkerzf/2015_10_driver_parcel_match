@@ -47,10 +47,10 @@ public class MatchingModel {
     private double weightArrivalTime;
     private double weightExtraTime;
 
-    public MatchingModel(){
+    public MatchingModel() {
     }
 
-    public void load(String confFilePath){
+    public void load(String confFilePath) {
         ExcelHandler excelHandler = new ExcelHandler(confFilePath);
         id = Integer.parseInt(excelHandler.xlsread("Input", 1, 16));
         numStations = Integer.parseInt(excelHandler.xlsread("Input", 1, 2));
@@ -59,14 +59,14 @@ public class MatchingModel {
 
         String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
         stationNameIndexMap = new HashMap<String, Integer>(numStations);
-        for(int i = 0; i < stationNames.length; i++) {
-            stationNameIndexMap.put(stationNames[i], i+1);
+        for (int i = 0; i < stationNames.length; i++) {
+            stationNameIndexMap.put(stationNames[i], i + 1);
         }
 
-        logger.debug( "id: {}", id);
-        logger.debug( "numStations: {}", numStations);
-        logger.debug( "numDrivers: {}", numDrivers);
-        logger.debug( "numParcels: {}", numParcels);
+        logger.debug("id: {}", id);
+        logger.debug("numStations: {}", numStations);
+        logger.debug("numDrivers: {}", numDrivers);
+        logger.debug("numParcels: {}", numParcels);
 
         String[] weightSettings = excelHandler.xlsread("Input", 1, 7, 12);
         weightTravelTime = Double.parseDouble(weightSettings[0]);
@@ -76,12 +76,12 @@ public class MatchingModel {
         weightArrivalTime = Double.parseDouble(weightSettings[4]);
         weightExtraTime = Double.parseDouble(weightSettings[5]);
 
-        logger.debug( "weightTravelTime: {}", weightTravelTime);
-        logger.debug( "weightNumParcelTransfer: {}", weightNumParcelTransfer);
-        logger.debug( "weightShippingCost: {}", weightShippingCost);
-        logger.debug( "weightWaitingTime: {}", weightWaitingTime);
-        logger.debug( "weightArrivalTime: {}", weightArrivalTime);
-        logger.debug( "weightExtraTime: {}", weightExtraTime);
+        logger.debug("weightTravelTime: {}", weightTravelTime);
+        logger.debug("weightNumParcelTransfer: {}", weightNumParcelTransfer);
+        logger.debug("weightShippingCost: {}", weightShippingCost);
+        logger.debug("weightWaitingTime: {}", weightWaitingTime);
+        logger.debug("weightArrivalTime: {}", weightArrivalTime);
+        logger.debug("weightExtraTime: {}", weightExtraTime);
 
         stationConfig = new StationConfig(numStations, excelHandler);
         driverConfig = new DriverConfig(numDrivers, excelHandler, stationNameIndexMap, stationConfig.getStationGraph());

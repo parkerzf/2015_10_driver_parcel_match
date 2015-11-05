@@ -5,7 +5,9 @@ import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * The class to record parcel config
@@ -32,7 +34,7 @@ public class ParcelConfig {
         parcelMap = new HashMap<Integer, Parcel>(numParcels);
         parcelSortedList = new ArrayList<Parcel>(numParcels);
 
-        for(int i =0; i < numParcels; i++){
+        for (int i = 0; i < numParcels; i++) {
             Parcel parcel = new Parcel(Integer.parseInt(idStrArray[i]),
                     stationNameIndexMap.get(startStationArray[i]),
                     stationNameIndexMap.get(endStationArray[i]),
@@ -40,7 +42,7 @@ public class ParcelConfig {
                     Integer.parseInt(latestArrivalArray[i]),
                     Double.parseDouble(costArray[i]),
                     Integer.parseInt(volumeArray[i]));
-            parcelMap.put(Integer.parseInt(idStrArray[i]),parcel);
+            parcelMap.put(Integer.parseInt(idStrArray[i]), parcel);
             parcelSortedList.add(parcel);
             logger.debug(parcelMap.get(Integer.parseInt(idStrArray[i])).toString());
         }

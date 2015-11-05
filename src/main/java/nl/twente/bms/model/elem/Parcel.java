@@ -19,7 +19,7 @@ public class Parcel implements Comparable<Parcel> {
     private int volume;
 
     public Parcel(int id, int startStationId, int endStationId,
-                  int earliestDepartureTime, int latestArrivalTime, double shippingCompanyCost, int volume){
+                  int earliestDepartureTime, int latestArrivalTime, double shippingCompanyCost, int volume) {
         this.id = id;
         this.startStationId = startStationId;
         this.endStationId = endStationId;
@@ -29,7 +29,7 @@ public class Parcel implements Comparable<Parcel> {
         this.volume = volume;
     }
 
-    public String toString(){
+    public String toString() {
         return String.format("Parcel[%d]: %d->%d, (%d, %d), $%.2f, %d", id, startStationId, endStationId,
                 earliestDepartureTime, latestArrivalTime, shippingCompanyCost, volume);
     }

@@ -17,7 +17,7 @@ public class WeightedSmartPath extends AbstractPath {
     private final IntArrayList edgeWeightList = new IntArrayList();
 
     public int getSource() {
-        if(this.vertexList.isEmpty()) {
+        if (this.vertexList.isEmpty()) {
             throw new IllegalStateException("path is empty");
         } else {
             return this.vertexList.get(0);
@@ -25,7 +25,7 @@ public class WeightedSmartPath extends AbstractPath {
     }
 
     public void setSource(int v) {
-        if(this.vertexList.isEmpty()) {
+        if (this.vertexList.isEmpty()) {
             this.vertexList.add(v);
         } else {
             this.vertexList.set(0, v);
@@ -33,7 +33,7 @@ public class WeightedSmartPath extends AbstractPath {
     }
 
     public int getDestination() {
-        if(this.vertexList.isEmpty()) {
+        if (this.vertexList.isEmpty()) {
             throw new IllegalStateException("path is empty");
         } else {
             return this.vertexList.get(this.vertexList.size() - 1);
@@ -57,7 +57,7 @@ public class WeightedSmartPath extends AbstractPath {
     }
 
     public int getEdgeHeadingToVertexAt(int i) {
-        if(i == 0) {
+        if (i == 0) {
             throw new IllegalArgumentException("the source of a path has no edge heading to it");
         } else {
             return this.edgeList.get(i - 1);
@@ -69,7 +69,7 @@ public class WeightedSmartPath extends AbstractPath {
     }
 
     public void extend(int thoughLink, int v, int weight) {
-        if(thoughLink >= 0 && this.getNumberOfVertices() == 0) {
+        if (thoughLink >= 0 && this.getNumberOfVertices() == 0) {
             throw new IllegalStateException("a path cannot start with an edge");
         } else {
             vertexList.add(v);
@@ -79,14 +79,14 @@ public class WeightedSmartPath extends AbstractPath {
         }
     }
 
-    public void removeLast(){
-        if(this.getNumberOfVertices() == 0) {
+    public void removeLast() {
+        if (this.getNumberOfVertices() == 0) {
             throw new IllegalStateException("can not remove anything from an empty path");
         } else {
-            int removedVertex = vertexList.remove(vertexList.size()-1);
+            int removedVertex = vertexList.remove(vertexList.size() - 1);
             vertexSet.remove(removedVertex);
-            if(getNumberOfVertices() != 0){
-                edgeList.remove(edgeList.size()-1);
+            if (getNumberOfVertices() != 0) {
+                edgeList.remove(edgeList.size() - 1);
                 edgeWeightList.remove(edgeWeightList.size() - 1);
             }
         }
@@ -97,7 +97,7 @@ public class WeightedSmartPath extends AbstractPath {
         WeightedSmartPath c = new WeightedSmartPath();
         c.setSource(getSource());
 
-        for(int i = 0; i < edgeList.size(); ++i) {
+        for (int i = 0; i < edgeList.size(); ++i) {
             c.extend(edgeList.get(i), this.getVertexAt(i + 1), edgeWeightList.get(i));
         }
         return c;
@@ -114,40 +114,40 @@ public class WeightedSmartPath extends AbstractPath {
     }
 
     public boolean equals(Object o) {
-        return o instanceof WeightedSmartPath?this.equals((WeightedSmartPath)o):super.equals(o);
+        return o instanceof WeightedSmartPath ? this.equals((WeightedSmartPath) o) : super.equals(o);
     }
 
     public boolean equals(WeightedSmartPath p) {
         return this.vertexList.equals(p.vertexList) && this.edgeList.equals(p.edgeList)
-                &&this.vertexSet.equals(p.vertexSet) && this.edgeWeightList.equals(p.edgeWeightList);
+                && this.vertexSet.equals(p.vertexSet) && this.edgeWeightList.equals(p.edgeWeightList);
     }
 
-    public int getWeight(){
+    public int getWeight() {
         int pathWeight = 0;
-        for(IntCursor weight: edgeWeightList){
+        for (IntCursor weight : edgeWeightList) {
             pathWeight += weight.value;
         }
         return pathWeight;
     }
 
-    public String toString(){
+    public String toString() {
         int n = this.getNumberOfVertices();
-        if(n == 0) {
+        if (n == 0) {
             return "[path does not exist]";
         } else {
             StringBuilder b = new StringBuilder();
 
-            for(int i = 0; i < n; ++i) {
+            for (int i = 0; i < n; ++i) {
                 int v = this.getVertexAt(i);
                 b.append("v" + v);
-                if(i < n - 1) {
+                if (i < n - 1) {
                     int e = this.getEdgeHeadingToVertexAt(i + 1);
-                    if(e >= 0) {
+                    if (e >= 0) {
                         b.append(" e" + e);
                     }
                 }
 
-                if(i < n - 1) {
+                if (i < n - 1) {
                     b.append(' ');
                 }
             }

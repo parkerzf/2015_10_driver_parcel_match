@@ -1,6 +1,7 @@
 package nl.twente.bms.model.conf;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import nl.twente.bms.algo.struct.StationGraph;
 import nl.twente.bms.algo.struct.TimeExpandedGraph;
 import nl.twente.bms.model.elem.Driver;
@@ -41,7 +42,7 @@ public class DriverConfig {
 
         //index driver object in driver map
         driverMap = new IntObjectOpenHashMap<Driver>(numDrivers);
-        for(int i =0; i < numDrivers; i++){
+        for (int i = 0; i < numDrivers; i++) {
             Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
                     stationNameIndexMap.get(startStationArray[i]),
                     stationNameIndexMap.get(endStationArray[i]),

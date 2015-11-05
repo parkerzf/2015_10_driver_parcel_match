@@ -30,24 +30,24 @@ public class StationConfig {
         stationGraph = new StationGraph();
         Property vLabel = new StringProperty("Label");
         String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
-        for(int i = 0; i < numStations; i ++ ){
+        for (int i = 0; i < numStations; i++) {
             stationGraph.addVertex(i + 1);
-            vLabel.setValue(i+1, stationNames[i]);
+            vLabel.setValue(i + 1, stationNames[i]);
         }
 
-        for(int col = 1; col < numStations + 1; col++ ){
-            for(int row = 1; row < numStations +1; row++){
+        for (int col = 1; col < numStations + 1; col++) {
+            for (int row = 1; row < numStations + 1; row++) {
                 int distance = Integer.parseInt(excelHandler.xlsread("Direct Distance", col, row));
                 stationGraph.setDirectDistance(col, row, distance);
                 logger.debug("{} <> {}: {}", col, row, distance);
             }
         }
 
-        for(int col = 1; col < numStations + 1; col++ ){
-            for(int row = col + 1; row < numStations +1; row++){
+        for (int col = 1; col < numStations + 1; col++) {
+            for (int row = col + 1; row < numStations + 1; row++) {
                 int distance = Integer.parseInt(excelHandler.xlsread("Distance", col, row));
                 // distance != 0 means that two stations have an edge
-                if(distance != 0){
+                if (distance != 0) {
                     int e = stationGraph.addUndirectedSimpleEdge(col, row);
                     stationGraph.setEdgeWeight(e, distance);
                     logger.debug("{} <> {}: {}", col, row, stationGraph.getEdgeWeight(e));

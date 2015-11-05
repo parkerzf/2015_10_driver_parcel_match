@@ -1,6 +1,8 @@
 package nl.twente.bms.algo.struct;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import grph.properties.NumericalProperty;
 import grph.properties.StringProperty;
@@ -24,10 +26,10 @@ public class TimeExpandedGraph extends StationGraph {
     // stationId --> timeTable
     private IntObjectMap<TimeTable> stationTimeTableMap;
 
-    public TimeExpandedGraph(StationGraph stationGraph){
-        nodeTimeProperty = new NumericalProperty ("time", 11, 1441);
-        nodeStationIdProperty = new NumericalProperty ("station", 16, 65535);
-        nodeDriverIdProperty = new NumericalProperty ("driver", 16, 65535);
+    public TimeExpandedGraph(StationGraph stationGraph) {
+        nodeTimeProperty = new NumericalProperty("time", 11, 1441);
+        nodeStationIdProperty = new NumericalProperty("station", 16, 65535);
+        nodeDriverIdProperty = new NumericalProperty("driver", 16, 65535);
         nodeLabelProperty = new StringProperty("Label");
 
         this.stationGraph = stationGraph;
@@ -36,15 +38,16 @@ public class TimeExpandedGraph extends StationGraph {
 
     /**
      * Add driver's feasible paths to the time expanded graph
+     *
      * @param driver
      */
-    public void addDriver(Driver driver){
+    public void addDriver(Driver driver) {
         IntArrayList candidate = new IntArrayList();
 
-        for(IntCursor cursor: stationGraph.getVertices()){
+        for (IntCursor cursor : stationGraph.getVertices()) {
             int v = cursor.value;
-            if(v == driver.getSource() || v == driver.getTarget() ) continue;
-            if(stationGraph.isFeasible(driver, v)) candidate.add(v);
+            if (v == driver.getSource() || v == driver.getTarget()) continue;
+            if (stationGraph.isFeasible(driver, v)) candidate.add(v);
         }
 
         int sourceTimeVertex = this.addTimeVertex(driver.getDepartureTime(), driver.getSource(), driver);
@@ -56,7 +59,7 @@ public class TimeExpandedGraph extends StationGraph {
         int driverEdge = this.addDirectedSimpleEdge(sourceTimeVertex, targetTimeVertex);
         setEdgeWeight(driverEdge, targetTime - driver.getDepartureTime());
 
-        for(IntCursor source_candidate_cursor: candidate) {
+        for (IntCursor source_candidate_cursor : candidate) {
             for (IntCursor target_candidate_cursor : candidate) {
                 int s = source_candidate_cursor.value;
                 int t = target_candidate_cursor.value;
@@ -66,7 +69,7 @@ public class TimeExpandedGraph extends StationGraph {
                     int sTime = driver.getDepartureTime() + stationGraph.getDuration(driver, driver.getSource(), s);
                     int sTimeVertex = this.addTimeVertex(sTime, s, driver);
 
-                    if(this.getEdgesConnecting(sourceTimeVertex, sTimeVertex).isEmpty()) {
+                    if (this.getEdgesConnecting(sourceTimeVertex, sTimeVertex).isEmpty()) {
                         int edgeDriverSourceSource = this.addDirectedSimpleEdge(sourceTimeVertex, sTimeVertex);
                         setEdgeWeight(edgeDriverSourceSource, sTime - driver.getDepartureTime());
                     }
@@ -80,14 +83,13 @@ public class TimeExpandedGraph extends StationGraph {
                     }
 
                     int driverTargetTime = tTime + stationGraph.getDuration(driver, t, driver.getTarget());
-                    if(driverTargetTime != targetTime){
+                    if (driverTargetTime != targetTime) {
                         int driverTargetTimeVertex = this.addTimeVertex(driverTargetTime, driver.getTarget(), driver);
-                        if(this.getEdgesConnecting(tTimeVertex, driverTargetTimeVertex).isEmpty()) {
+                        if (this.getEdgesConnecting(tTimeVertex, driverTargetTimeVertex).isEmpty()) {
                             int edgeTargetDriverTarget = this.addDirectedSimpleEdge(tTimeVertex, driverTargetTimeVertex);
                             setEdgeWeight(edgeTargetDriverTarget, driverTargetTime - tTime);
                         }
-                    }
-                    else if(this.getEdgesConnecting(tTimeVertex, targetTimeVertex).isEmpty()) {
+                    } else if (this.getEdgesConnecting(tTimeVertex, targetTimeVertex).isEmpty()) {
                         int edgeTargetDriverTarget = this.addDirectedSimpleEdge(tTimeVertex, targetTimeVertex);
                         setEdgeWeight(edgeTargetDriverTarget, targetTime - tTime);
                     }
@@ -99,9 +101,10 @@ public class TimeExpandedGraph extends StationGraph {
 
     /**
      * Add a time vertex with the associated properties
-     * @param time the time arriving the station
+     *
+     * @param time      the time arriving the station
      * @param stationId the station id in station graph
-     * @param driver the driver travel on station graph
+     * @param driver    the driver travel on station graph
      * @return the time vertex id
      */
     private int addTimeVertex(int time, int stationId, Driver driver) {
@@ -111,7 +114,7 @@ public class TimeExpandedGraph extends StationGraph {
             stationTimeTableMap.put(stationId, timeTable);
         }
         int vertex = timeTable.getTimeVertex(time, driver, nodeDriverIdProperty);
-        if(vertex != -1) return vertex;
+        if (vertex != -1) return vertex;
 
         vertex = this.addVertex();
         nodeTimeProperty.setValue(vertex, time);
@@ -123,7 +126,7 @@ public class TimeExpandedGraph extends StationGraph {
         return vertex;
     }
 
-    public void removeDriver(Driver driver){
+    public void removeDriver(Driver driver) {
 
     }
 
