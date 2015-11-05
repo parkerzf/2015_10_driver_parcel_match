@@ -5,6 +5,7 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import grph.properties.NumericalProperty;
 import grph.properties.StringProperty;
 import nl.twente.bms.model.elem.Driver;
+import nl.twente.bms.model.elem.Offer;
 
 /**
  * The class to store the time expanded graph with respect ot the station graph
@@ -12,7 +13,7 @@ import nl.twente.bms.model.elem.Driver;
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
  */
-// TODO add driver info to node and edge
+
 public class TimeExpandedGraph extends StationGraph {
 
     private final NumericalProperty nodeTimeProperty;
@@ -35,10 +36,11 @@ public class TimeExpandedGraph extends StationGraph {
     }
 
     /**
-     * Add driver's feasible paths to the time expanded graph
+     * Add driver offer's feasible paths to the time expanded graph
      * @param driver
+     * @param offer
      */
-    public void addDriver(Driver driver){
+    public void addOffer(Driver driver, Offer offer){
         IntArrayList candidate = new IntArrayList();
 
         for(IntCursor cursor: stationGraph.getVertices()){
@@ -123,8 +125,8 @@ public class TimeExpandedGraph extends StationGraph {
         return vertex;
     }
 
-    public void removeDriver(Driver driver){
-
+    public void markOfferRemoved(Driver driver, Offer offer){
+        //TODO
     }
 
 }
