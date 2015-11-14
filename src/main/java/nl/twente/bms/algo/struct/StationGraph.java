@@ -6,7 +6,7 @@ import grph.in_memory.InMemoryGrph;
 import grph.path.Path;
 import grph.properties.NumericalProperty;
 import nl.twente.bms.algo.MaxDetourPaths;
-import nl.twente.bms.model.elem.Driver;
+import nl.twente.bms.model.elem.Offer;
 
 import java.util.Collection;
 
@@ -96,61 +96,61 @@ public class StationGraph extends InMemoryGrph {
     }
 
     /**
-     * @param driver
+     * @param offer
      * @param detourVertex vertex in the detour
      *                     Check the detour and the delay is within the bound for path source -> detourVertex -> target
      * @return the feasible status of this detour path
      */
-    public boolean isFeasible(Driver driver, int detourVertex) {
-        //TODO compute all pair shortest Path for all the drivers' sources
-        int distanceSourceDetourVertex = getDistance(getShortestPath(driver.getSource(), detourVertex));
-        int distanceDetourVertexTarget = getDistance(getShortestPath(detourVertex, driver.getTarget()));
-        int distanceSourceTarget = getDistance(getShortestPath(driver.getSource(), driver.getTarget()));
+    public boolean isFeasible(Offer offer, int detourVertex) {
+        //TODO compute all pair shortest Path for all the driver offer's sources
+        int distanceSourceDetourVertex = getDistance(getShortestPath(offer.getSource(), detourVertex));
+        int distanceDetourVertexTarget = getDistance(getShortestPath(detourVertex, offer.getTarget()));
+        int distanceSourceTarget = getDistance(getShortestPath(offer.getSource(), offer.getTarget()));
 
         // detour feasibility
         if (distanceSourceDetourVertex + distanceDetourVertexTarget
-                > (1 + driver.getEpsilon()) * distanceSourceTarget) return false;
+                > (1 + offer.getEpsilon()) * distanceSourceTarget) return false;
 
         // delay feasibility
-        return driver.getDuration(distanceSourceDetourVertex) + driver.getDuration(distanceDetourVertexTarget)
-                + driver.getHoldDuration() <= (1 + driver.getGamma()) * driver.getDuration(distanceSourceTarget);
+        return offer.getDuration(distanceSourceDetourVertex) + offer.getDuration(distanceDetourVertexTarget)
+                + offer.getHoldDuration() <= (1 + offer.getGamma()) * offer.getDuration(distanceSourceTarget);
     }
 
     /**
-     * @param driver
+     * @param offer
      * @param detourSource vertex in the detour
      * @param detourTarget vertex in the detour
      *                     Check the detour and the delay is within the bound for path source -> detourSource -> detourTarget -> target
      * @return the feasible status of this detour
      */
-    public boolean isFeasible(Driver driver, int detourSource, int detourTarget) {
-        int distanceSourceDetourSource = getDistance(getShortestPath(driver.getSource(), detourSource));
+    public boolean isFeasible(Offer offer, int detourSource, int detourTarget) {
+        int distanceSourceDetourSource = getDistance(getShortestPath(offer.getSource(), detourSource));
         int distanceDetourSourceDetourTarget = getDistance(getShortestPath(detourSource, detourTarget));
-        int distanceDetourTargetTarget = getDistance(getShortestPath(detourTarget, driver.getTarget()));
-        int distanceSourceTarget = getDistance(getShortestPath(driver.getSource(), driver.getTarget()));
+        int distanceDetourTargetTarget = getDistance(getShortestPath(detourTarget, offer.getTarget()));
+        int distanceSourceTarget = getDistance(getShortestPath(offer.getSource(), offer.getTarget()));
 
         // detour feasibility
         if (distanceSourceDetourSource + distanceDetourSourceDetourTarget
-                + distanceDetourTargetTarget > (1 + driver.getEpsilon()) * distanceSourceTarget)
+                + distanceDetourTargetTarget > (1 + offer.getEpsilon()) * distanceSourceTarget)
             return false;
 
         // delay feasibility
-        return driver.getDuration(distanceSourceDetourSource) + driver.getDuration(distanceDetourSourceDetourTarget)
-                + driver.getDuration(distanceDetourTargetTarget) + driver.getHoldDuration()
-                <= (1 + driver.getGamma()) * driver.getDuration(distanceSourceTarget);
+        return offer.getDuration(distanceSourceDetourSource) + offer.getDuration(distanceDetourSourceDetourTarget)
+                + offer.getDuration(distanceDetourTargetTarget) + offer.getHoldDuration()
+                <= (1 + offer.getGamma()) * offer.getDuration(distanceSourceTarget);
     }
 
     /**
-     * The driver's travel duration on the station graph
+     * The driver's offer travel duration on the station graph
      *
-     * @param driver the driver to travel from source to target
+     * @param offer the driver's offer to travel from source to target
      * @param source the source station vertex
      * @param target the target station vertex
      * @return
      */
-    public int getDuration(Driver driver, int source, int target) {
+    public int getDuration(Offer offer, int source, int target) {
         Path path = getShortestPath(source, target);
-        return driver.getDuration(getDistance(path));
+        return offer.getDuration(getDistance(path));
     }
 
     /**

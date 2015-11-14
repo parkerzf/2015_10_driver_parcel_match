@@ -39,7 +39,6 @@ public class StationConfig {
             for (int row = 1; row < numStations + 1; row++) {
                 int distance = Integer.parseInt(excelHandler.xlsread("Direct Distance", col, row));
                 stationGraph.setDirectDistance(col, row, distance);
-                logger.debug("{} <> {}: {}", col, row, distance);
             }
         }
 
@@ -50,7 +49,6 @@ public class StationConfig {
                 if (distance != 0) {
                     int e = stationGraph.addUndirectedSimpleEdge(col, row);
                     stationGraph.setEdgeWeight(e, distance);
-                    logger.debug("{} <> {}: {}", col, row, stationGraph.getEdgeWeight(e));
                 }
             }
         }

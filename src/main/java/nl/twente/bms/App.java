@@ -10,6 +10,5 @@ public class App {
         String confFilePath = "Data.xls";
         MatchingModel model = new MatchingModel();
         model.load(confFilePath);
-
     }
 }

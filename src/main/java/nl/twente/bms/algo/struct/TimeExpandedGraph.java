@@ -6,7 +6,6 @@ import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import grph.properties.NumericalProperty;
 import grph.properties.StringProperty;
-import nl.twente.bms.model.elem.Driver;
 import nl.twente.bms.model.elem.Offer;
 
 /**
@@ -20,7 +19,7 @@ public class TimeExpandedGraph extends StationGraph {
 
     private final NumericalProperty nodeTimeProperty;
     private final NumericalProperty nodeStationIdProperty;
-    private final NumericalProperty nodeDriverIdProperty;
+    private final NumericalProperty nodeOfferIdProperty;
     private final StringProperty nodeLabelProperty;
 
     private final StationGraph stationGraph;
@@ -30,7 +29,7 @@ public class TimeExpandedGraph extends StationGraph {
     public TimeExpandedGraph(StationGraph stationGraph) {
         nodeTimeProperty = new NumericalProperty("time", 11, 1441);
         nodeStationIdProperty = new NumericalProperty("station", 16, 65535);
-        nodeDriverIdProperty = new NumericalProperty("driver", 16, 65535);
+        nodeOfferIdProperty = new NumericalProperty("driver", 16, 65535);
         nodeLabelProperty = new StringProperty("Label");
 
         this.stationGraph = stationGraph;
@@ -39,53 +38,53 @@ public class TimeExpandedGraph extends StationGraph {
 
     /**
      * Add driver offer's feasible paths to the time expanded graph
-     * @param driver
-     * @param offer
+     *
+     * @param offer driver's offer
      */
-    public void addOffer(Driver driver, Offer offer){
+    public void addOffer(Offer offer) {
         IntArrayList candidates = new IntArrayList();
 
         for (IntCursor cursor : stationGraph.getVertices()) {
             int v = cursor.value;
-            if (v == driver.getSource() || v == driver.getTarget()) continue;
-            if (stationGraph.isFeasible(driver, v)) candidates.add(v);
+            if (v == offer.getSource() || v == offer.getTarget()) continue;
+            if (stationGraph.isFeasible(offer, v)) candidates.add(v);
         }
 
-        int sourceTimeVertex = this.addTimeVertex(driver.getDepartureTime(), driver.getSource(), driver);
-        int targetTime = driver.getDepartureTime() +
-                stationGraph.getDuration(driver, driver.getSource(), driver.getTarget());
-        int targetTimeVertex = this.addTimeVertex(targetTime, driver.getTarget(), driver);
+        int sourceTimeVertex = this.addTimeVertex(offer.getDepartureTime(), offer.getSource(), offer);
+        int targetTime = offer.getDepartureTime() +
+                stationGraph.getDuration(offer, offer.getSource(), offer.getTarget());
+        int targetTimeVertex = this.addTimeVertex(targetTime, offer.getTarget(), offer);
 
         // assign the special case that directly travel from driver.sourceTimeVertex to driver.targetTimeVertex
         int driverEdge = this.addDirectedSimpleEdge(sourceTimeVertex, targetTimeVertex);
-        setEdgeWeight(driverEdge, targetTime - driver.getDepartureTime());
+        setEdgeWeight(driverEdge, targetTime - offer.getDepartureTime());
 
         for (IntCursor source_candidate_cursor : candidates) {
             for (IntCursor target_candidate_cursor : candidates) {
                 int s = source_candidate_cursor.value;
                 int t = target_candidate_cursor.value;
 
-                if (s == t || stationGraph.isFeasible(driver, s, t)) {
+                if (s == t || stationGraph.isFeasible(offer, s, t)) {
 
-                    int sTime = driver.getDepartureTime() + stationGraph.getDuration(driver, driver.getSource(), s);
-                    int sTimeVertex = this.addTimeVertex(sTime, s, driver);
+                    int sTime = offer.getDepartureTime() + stationGraph.getDuration(offer, offer.getSource(), s);
+                    int sTimeVertex = this.addTimeVertex(sTime, s, offer);
 
                     if (this.getEdgesConnecting(sourceTimeVertex, sTimeVertex).isEmpty()) {
                         int edgeDriverSourceSource = this.addDirectedSimpleEdge(sourceTimeVertex, sTimeVertex);
-                        setEdgeWeight(edgeDriverSourceSource, sTime - driver.getDepartureTime());
+                        setEdgeWeight(edgeDriverSourceSource, sTime - offer.getDepartureTime());
                     }
 
-                    int tTime = sTime + stationGraph.getDuration(driver, s, t);
-                    int tTimeVertex = this.addTimeVertex(tTime, t, driver);
+                    int tTime = sTime + stationGraph.getDuration(offer, s, t);
+                    int tTimeVertex = this.addTimeVertex(tTime, t, offer);
 
                     if (s != t && this.getEdgesConnecting(sTimeVertex, tTimeVertex).isEmpty()) {
                         int e = this.addDirectedSimpleEdge(sTimeVertex, tTimeVertex);
                         setEdgeWeight(e, tTime - sTime);
                     }
 
-                    int driverTargetTime = tTime + stationGraph.getDuration(driver, t, driver.getTarget());
+                    int driverTargetTime = tTime + stationGraph.getDuration(offer, t, offer.getTarget());
                     if (driverTargetTime != targetTime) {
-                        int driverTargetTimeVertex = this.addTimeVertex(driverTargetTime, driver.getTarget(), driver);
+                        int driverTargetTimeVertex = this.addTimeVertex(driverTargetTime, offer.getTarget(), offer);
                         if (this.getEdgesConnecting(tTimeVertex, driverTargetTimeVertex).isEmpty()) {
                             int edgeTargetDriverTarget = this.addDirectedSimpleEdge(tTimeVertex, driverTargetTimeVertex);
                             setEdgeWeight(edgeTargetDriverTarget, driverTargetTime - tTime);
@@ -105,30 +104,34 @@ public class TimeExpandedGraph extends StationGraph {
      *
      * @param time      the time arriving the station
      * @param stationId the station id in station graph
-     * @param driver    the driver travel on station graph
+     * @param offer    the driver'offer on station graph
      * @return the time vertex id
      */
-    private int addTimeVertex(int time, int stationId, Driver driver) {
+    private int addTimeVertex(int time, int stationId, Offer offer) {
         TimeTable timeTable = stationTimeTableMap.get(stationId);
         if (timeTable == null) {
             timeTable = new TimeTable();
             stationTimeTableMap.put(stationId, timeTable);
         }
-        int vertex = timeTable.getTimeVertex(time, driver, nodeDriverIdProperty);
+        int vertex = timeTable.getTimeVertex(time, offer, nodeOfferIdProperty);
         if (vertex != -1) return vertex;
 
         vertex = this.addVertex();
         nodeTimeProperty.setValue(vertex, time);
         nodeStationIdProperty.setValue(vertex, stationId);
-        nodeDriverIdProperty.setValue(vertex, driver.getId());
+        nodeOfferIdProperty.setValue(vertex, offer.getId());
         nodeLabelProperty.setValue(vertex, vertex + "_" + stationGraph.getLabel(stationId) + "@" + time);
 
-        timeTable.addTimeVertex(this, vertex, nodeTimeProperty, driver);
+        timeTable.addTimeVertex(this, vertex, nodeTimeProperty, offer);
         return vertex;
     }
 
-
-    public void markOfferRemoved(Driver driver, Offer offer){
+    /**
+     * Mark an offer removed
+     *
+     * @param offer    the driver'offer on station graph
+     */
+    public void markOfferRemoved(Offer offer) {
         //TODO
     }
 

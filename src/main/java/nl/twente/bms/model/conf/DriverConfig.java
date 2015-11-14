@@ -23,14 +23,12 @@ public class DriverConfig {
 
     private int nextOfferId;
     private IntObjectMap<Driver> driverMap;
-    private IntObjectMap<Driver> offerIdDriverMap;
+    private IntObjectMap<Offer> offerMap;
     private TimeExpandedGraph timeExpandedGraph;
 
     public DriverConfig(int numDrivers, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
                         StationGraph stationGraph) {
         nextOfferId = 0;
-        driverMap = new IntObjectOpenHashMap<>(numDrivers);
-        offerIdDriverMap = new IntObjectOpenHashMap<>(numDrivers);
 
         double speed = Double.parseDouble(excelHandler.xlsread("Input", 1, 4));
         double detour = Double.parseDouble(excelHandler.xlsread("Input", 7, 16));
@@ -41,13 +39,14 @@ public class DriverConfig {
         String[] startStationArray = excelHandler.xlsread("Input", 4, 1, numDrivers);
         String[] endStationArray = excelHandler.xlsread("Input", 5, 1, numDrivers);
         String[] earliestDepartureArray = excelHandler.xlsread("Input", 7, 1, numDrivers);
-        String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numDrivers);
+        // String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numDrivers);
         String[] capacityArray = excelHandler.xlsread("Input", 10, 1, numDrivers);
 
         timeExpandedGraph = new TimeExpandedGraph(stationGraph);
 
         //index driver object in driver map
-        driverMap = new IntObjectOpenHashMap<Driver>(numDrivers);
+        driverMap = new IntObjectOpenHashMap<>(numDrivers);
+        offerMap = new IntObjectOpenHashMap<>(numDrivers);
         for (int i = 0; i < numDrivers; i++) {
             Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
                     stationNameIndexMap.get(startStationArray[i]),
@@ -59,12 +58,17 @@ public class DriverConfig {
                     speed,
                     Integer.parseInt(capacityArray[i]));
             driverMap.put(Integer.parseInt(idStrArray[i]), driver);
-            Offer offer = driver.createInitOffer(nextOfferId);
-            offerIdDriverMap.put(nextOfferId++, driver);
-            timeExpandedGraph.addOffer(driver, offer);
-            logger.debug(driver.toString());
+            int currentId = getNextOfferId();
+            Offer offer = driver.createInitOffer(currentId);
+            offerMap.put(currentId, offer);
+            timeExpandedGraph.addOffer(offer);
+            logger.debug(offer.toString());
         }
         timeExpandedGraph.display();
+    }
+
+    public int getNextOfferId() {
+        return nextOfferId++;
     }
 
 }

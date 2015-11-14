@@ -3,7 +3,7 @@ package nl.twente.bms.algo.struct;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import grph.properties.NumericalProperty;
-import nl.twente.bms.model.elem.Driver;
+import nl.twente.bms.model.elem.Offer;
 
 /**
  * The class to store the time table for one station
@@ -23,14 +23,14 @@ public class TimeTable {
      * Check the time vertex presence
      *
      * @param time             the time at this station
-     * @param driver           the current driver
+     * @param offer           the current driver's offer
      * @param driverIdProperty the vertex driverIdProperty in time expanded graph
      * @return the time vertex if exist, otherwise -1
      */
-    public int getTimeVertex(int time, Driver driver, NumericalProperty driverIdProperty) {
+    public int getTimeVertex(int time, Offer offer, NumericalProperty driverIdProperty) {
         if (timeSlots[time] == null) return -1;
         int lastVertexId = timeSlots[time].get(timeSlots[time].size() - 1);
-        if (driverIdProperty.getValueAsInt(lastVertexId) == driver.getId()) {
+        if (driverIdProperty.getValueAsInt(lastVertexId) == offer.getId()) {
             return lastVertexId;
         }
         return -1;
@@ -42,15 +42,15 @@ public class TimeTable {
      * @param graph        the time expanded graph
      * @param vertex       the time vertex id in the time expanded graph
      * @param timeProperty the vertex timeProperty
-     * @param driver       the driver associated with the vertex
+     * @param offer       the driver's associated with the vertex
      */
-    public void addTimeVertex(TimeExpandedGraph graph, int vertex, NumericalProperty timeProperty, Driver driver) {
+    public void addTimeVertex(TimeExpandedGraph graph, int vertex, NumericalProperty timeProperty, Offer offer) {
         int vertexTime = timeProperty.getValueAsInt(vertex);
 
         // Adds the vertex to the nearest past vertex with in [vertexTime - holdDuration, vertexTime]
         int nearestPastVertex = -1;
-        int nearestPastDelay = driver.getHoldDuration() + 1;
-        for (int offset = 0; offset <= driver.getHoldDuration(); offset++) {
+        int nearestPastDelay = offer.getHoldDuration() + 1;
+        for (int offset = 0; offset <= offer.getHoldDuration(); offset++) {
             if (vertexTime - offset < 0) break;
             if (timeSlots[vertexTime - offset] != null) {
                 nearestPastVertex = timeSlots[vertexTime - offset].get(timeSlots[vertexTime - offset].size() - 1);
@@ -71,8 +71,8 @@ public class TimeTable {
 
         // Adds the vertex to the nearest future vertex with in (vertexTime, vertexTime + holdDuration]
         int nearestFutureVertex = -1;
-        int nearestFutureDelay = driver.getHoldDuration() + 1;
-        for (int offset = 1; offset <= driver.getHoldDuration(); offset++) {
+        int nearestFutureDelay = offer.getHoldDuration() + 1;
+        for (int offset = 1; offset <= offer.getHoldDuration(); offset++) {
             if (vertexTime + offset > 1439) break;
             if (timeSlots[vertexTime + offset] != null) {
                 nearestFutureVertex = timeSlots[vertexTime + offset].get(timeSlots[vertexTime + offset].size() - 1);
@@ -87,8 +87,8 @@ public class TimeTable {
         }
 
         // remove the previous connection between nearestPastVertex and nearestFutureVertex
-        if(nearestPastDelay + nearestFutureDelay <= driver.getHoldDuration()){
-            for(IntCursor edgeCursor: graph.getEdgesConnecting(nearestPastVertex, nearestFutureVertex)){
+        if (nearestPastDelay + nearestFutureDelay <= offer.getHoldDuration()) {
+            for (IntCursor edgeCursor : graph.getEdgesConnecting(nearestPastVertex, nearestFutureVertex)) {
                 int edge = edgeCursor.value;
                 graph.removeEdge(edge);
             }
