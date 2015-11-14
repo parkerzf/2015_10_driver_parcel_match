@@ -42,12 +42,12 @@ public class TimeExpandedGraph extends StationGraph {
      * @param driver
      */
     public void addDriver(Driver driver) {
-        IntArrayList candidate = new IntArrayList();
+        IntArrayList candidates = new IntArrayList();
 
         for (IntCursor cursor : stationGraph.getVertices()) {
             int v = cursor.value;
             if (v == driver.getSource() || v == driver.getTarget()) continue;
-            if (stationGraph.isFeasible(driver, v)) candidate.add(v);
+            if (stationGraph.isFeasible(driver, v)) candidates.add(v);
         }
 
         int sourceTimeVertex = this.addTimeVertex(driver.getDepartureTime(), driver.getSource(), driver);
@@ -59,8 +59,8 @@ public class TimeExpandedGraph extends StationGraph {
         int driverEdge = this.addDirectedSimpleEdge(sourceTimeVertex, targetTimeVertex);
         setEdgeWeight(driverEdge, targetTime - driver.getDepartureTime());
 
-        for (IntCursor source_candidate_cursor : candidate) {
-            for (IntCursor target_candidate_cursor : candidate) {
+        for (IntCursor source_candidate_cursor : candidates) {
+            for (IntCursor target_candidate_cursor : candidates) {
                 int s = source_candidate_cursor.value;
                 int t = target_candidate_cursor.value;
 
