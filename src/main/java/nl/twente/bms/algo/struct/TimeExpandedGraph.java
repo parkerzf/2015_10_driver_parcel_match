@@ -43,7 +43,7 @@ public class TimeExpandedGraph extends StationGraph {
      * @param offer
      */
     public void addOffer(Driver driver, Offer offer){
-        IntArrayList candidate = new IntArrayList();
+        IntArrayList candidates = new IntArrayList();
 
         for (IntCursor cursor : stationGraph.getVertices()) {
             int v = cursor.value;
