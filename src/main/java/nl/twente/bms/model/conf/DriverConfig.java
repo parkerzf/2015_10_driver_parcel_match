@@ -5,6 +5,7 @@ import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import nl.twente.bms.algo.struct.StationGraph;
 import nl.twente.bms.algo.struct.TimeExpandedGraph;
 import nl.twente.bms.model.elem.Driver;
+import nl.twente.bms.model.elem.Offer;
 import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +21,16 @@ import java.util.HashMap;
 public class DriverConfig {
     private static final Logger logger = LoggerFactory.getLogger(DriverConfig.class);
 
+    private int nextOfferId;
     private IntObjectMap<Driver> driverMap;
+    private IntObjectMap<Driver> offerIdDriverMap;
     private TimeExpandedGraph timeExpandedGraph;
 
     public DriverConfig(int numDrivers, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
                         StationGraph stationGraph) {
+        nextOfferId = 0;
+        driverMap = new IntObjectOpenHashMap<>(numDrivers);
+        offerIdDriverMap = new IntObjectOpenHashMap<>(numDrivers);
 
         double speed = Double.parseDouble(excelHandler.xlsread("Input", 1, 4));
         double detour = Double.parseDouble(excelHandler.xlsread("Input", 7, 16));
@@ -53,9 +59,12 @@ public class DriverConfig {
                     speed,
                     Integer.parseInt(capacityArray[i]));
             driverMap.put(Integer.parseInt(idStrArray[i]), driver);
-            timeExpandedGraph.addDriver(driver);
+            Offer offer = driver.createInitOffer(nextOfferId);
+            offerIdDriverMap.put(nextOfferId++, driver);
+            timeExpandedGraph.addOffer(driver, offer);
             logger.debug(driver.toString());
         }
         timeExpandedGraph.display();
     }
+
 }

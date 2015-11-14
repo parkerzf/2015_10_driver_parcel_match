@@ -114,7 +114,6 @@ public class StationGraph extends InMemoryGrph {
         // delay feasibility
         return driver.getDuration(distanceSourceDetourVertex) + driver.getDuration(distanceDetourVertexTarget)
                 + driver.getHoldDuration() <= (1 + driver.getGamma()) * driver.getDuration(distanceSourceTarget);
-
     }
 
     /**
