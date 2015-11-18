@@ -1,5 +1,7 @@
 package nl.twente.bms.model.elem;
 
+import grph.path.Path;
+
 /**
  * The class to store the Parcel object
  *
@@ -18,6 +20,8 @@ public class Parcel implements Comparable<Parcel> {
     private double shippingCompanyCost;
     private int volume;
 
+    private Path path;
+
     public Parcel(int id, int startStationId, int endStationId,
                   int earliestDepartureTime, int latestArrivalTime, double shippingCompanyCost, int volume) {
         this.id = id;
@@ -27,6 +31,46 @@ public class Parcel implements Comparable<Parcel> {
         this.latestArrivalTime = latestArrivalTime;
         this.shippingCompanyCost = shippingCompanyCost;
         this.volume = volume;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getStartStationId() {
+        return startStationId;
+    }
+
+    public int getEndStationId() {
+        return endStationId;
+    }
+
+    public int getEarliestDepartureTime() {
+        return earliestDepartureTime;
+    }
+
+    public int getLatestArrivalTime() {
+        return latestArrivalTime;
+    }
+
+    public double getShippingCompanyCost() {
+        return shippingCompanyCost;
+    }
+
+    public int getVolume() {
+        return volume;
+    }
+
+    public Path getPath() {
+        return path;
+    }
+
+    public void setPath(Path path) {
+        this.path = path;
+    }
+
+    public boolean isAssigned(){
+        return path != null;
     }
 
     public String toString() {

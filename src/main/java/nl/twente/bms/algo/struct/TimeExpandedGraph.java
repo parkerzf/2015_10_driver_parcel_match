@@ -1,12 +1,19 @@
 package nl.twente.bms.algo.struct;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import grph.algo.search.GraphSearchListener;
+import grph.path.Path;
+import grph.path.SearchResultWrappedPath;
 import grph.properties.NumericalProperty;
 import grph.properties.StringProperty;
+import nl.twente.bms.algo.DijkstraEnhancedAlgorithm;
+import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.elem.Offer;
+import nl.twente.bms.model.elem.Parcel;
+import toools.set.IntHashSet;
+import toools.set.IntSet;
+
 
 /**
  * The class to store the time expanded graph with respect ot the station graph
@@ -24,13 +31,17 @@ public class TimeExpandedGraph extends StationGraph {
 
     private final StationGraph stationGraph;
     // stationId --> timeTable
-    private IntObjectMap<TimeTable> stationTimeTableMap;
+    private IntObjectMap<TimeTableImproved> stationTimeTableMap;
+
+    private IntSet markRemovedOfferIds;
 
     public TimeExpandedGraph(StationGraph stationGraph) {
         nodeTimeProperty = new NumericalProperty("time", 11, 1441);
         nodeStationIdProperty = new NumericalProperty("station", 16, 65535);
-        nodeOfferIdProperty = new NumericalProperty("driver", 16, 65535);
-        nodeLabelProperty = new StringProperty("Label");
+        nodeOfferIdProperty = new NumericalProperty("offer", 16, 65535);
+        nodeLabelProperty = new StringProperty("label");
+
+        markRemovedOfferIds = new IntHashSet();
 
         this.stationGraph = stationGraph;
         stationTimeTableMap = new IntObjectOpenHashMap<>(stationGraph.getNumberOfVertices());
@@ -108,31 +119,103 @@ public class TimeExpandedGraph extends StationGraph {
      * @return the time vertex id
      */
     private int addTimeVertex(int time, int stationId, Offer offer) {
-        TimeTable timeTable = stationTimeTableMap.get(stationId);
-        if (timeTable == null) {
-            timeTable = new TimeTable();
-            stationTimeTableMap.put(stationId, timeTable);
+        TimeTableImproved timeTable = getTimeTable(stationId);
+        int vertexId = timeTable.getTimeVertex(time, offer, nodeOfferIdProperty);
+        if (vertexId != -1) return vertexId;
+
+        vertexId = this.addVertex();
+        nodeTimeProperty.setValue(vertexId, time);
+        nodeStationIdProperty.setValue(vertexId, stationId);
+        nodeOfferIdProperty.setValue(vertexId, offer.getId());
+        nodeLabelProperty.setValue(vertexId, time + "@" + vertexId + "_" + stationGraph.getLabel(stationId));
+
+        timeTable.addTimeVertex(this, vertexId, nodeTimeProperty, offer);
+        return vertexId;
+    }
+
+    public void assignParcel(Parcel parcel, DriverConfig driverConfig){
+        TimeTableImproved startTimeTable = getTimeTable(parcel.getStartStationId());
+        //TODO change it to consider markedRemoveOffers
+        int startVertexId = startTimeTable.findFirstTimeVertex(parcel.getEarliestDepartureTime());
+
+        TimeTableImproved endTimeTable = getTimeTable(parcel.getEndStationId());
+        //TODO change it to consider markedRemoveOffers
+        int endVertexId = endTimeTable.findLastTimeVertex(parcel.getLatestArrivalTime());
+        if(startVertexId != -1 && endVertexId != -1){
+            //TODO change endVertexId to endStationId, so that we can find the earliest vertices in the endStation
+            Path path = getShortestPath(startVertexId, endVertexId, driverConfig, parcel.getVolume());
+            if(path != null){
+                parcel.setPath(path);
+                updateOffers(path, driverConfig, parcel);
+            }
         }
-        int vertex = timeTable.getTimeVertex(time, offer, nodeOfferIdProperty);
-        if (vertex != -1) return vertex;
+    }
 
-        vertex = this.addVertex();
-        nodeTimeProperty.setValue(vertex, time);
-        nodeStationIdProperty.setValue(vertex, stationId);
-        nodeOfferIdProperty.setValue(vertex, offer.getId());
-        nodeLabelProperty.setValue(vertex, vertex + "_" + stationGraph.getLabel(stationId) + "@" + time);
-
-        timeTable.addTimeVertex(this, vertex, nodeTimeProperty, offer);
-        return vertex;
+    public Path getShortestPath(int source, int destination, DriverConfig driverConfig, int volume) {
+        return new SearchResultWrappedPath(new DijkstraEnhancedAlgorithm(
+                getWeightProperty(), nodeOfferIdProperty, markRemovedOfferIds)
+                .compute(this, source, driverConfig, volume, DIRECTION.out, null), source, destination);
     }
 
     /**
-     * Mark an offer removed
-     *
-     * @param offer    the driver'offer on station graph
+     * Update offers on the assigned Path by marking them as removed,
+     * and the drivers of the updated offers add some new offers
+     *  @param path the assigned path
+     * @param driverConfig
+     * @param parcel
      */
-    public void markOfferRemoved(Offer offer) {
-        //TODO
+    private void updateOffers(Path path, DriverConfig driverConfig, Parcel parcel) {
+
+        // update capacities for the offers in the assigned path
+        int preVertexId = -1;
+        int startVertexId = -1;
+        int endVertexId = -1;
+        int prevOfferId = -1;
+        int newOfferId = -1;
+        for (int i = 0; i < path.getNumberOfVertices(); i++) {
+            int currentVertex = path.getVertexAt(i);
+            int currentOfferId = nodeOfferIdProperty.getValueAsInt(currentVertex);
+
+            //a new offer hop
+            if(currentOfferId != prevOfferId){
+                if (newOfferId != -1) {
+                    Offer prevOffer = driverConfig.getOfferById(prevOfferId);
+                    markOfferRemoved(prevOffer);
+                    int prevCapacity = prevOffer.getCapacity() - parcel.getVolume();
+                    endVertexId = preVertexId;
+                    driverConfig.addOffer(
+                            new Offer(newOfferId,
+                                    nodeStationIdProperty.getValueAsInt(startVertexId),
+                                    nodeStationIdProperty.getValueAsInt(endVertexId),
+                                    nodeTimeProperty.getValueAsInt(startVertexId),
+                                    prevCapacity, prevOffer.getDriver()));
+                }
+                newOfferId = driverConfig.getNextOfferId();
+                startVertexId = currentVertex;
+            }
+
+            nodeOfferIdProperty.setValue(currentVertex, newOfferId);
+            preVertexId = currentVertex;
+            prevOfferId = currentOfferId;
+        }
+    }
+
+    private void markOfferRemoved(Offer offer) {
+        markRemovedOfferIds.add(offer.getId());
+    }
+
+    public void removeVertex(int vertexId){
+        super.removeVertex(vertexId);
+        TimeTableImproved timeTable = getTimeTable(nodeStationIdProperty.getValueAsInt(vertexId));
+        timeTable.removeTimeVertex(vertexId, nodeTimeProperty);
+    }
+    private TimeTableImproved getTimeTable(int stationId){
+        TimeTableImproved timeTable = stationTimeTableMap.get(stationId);
+        if (timeTable == null) {
+            timeTable = new TimeTableImproved();
+            stationTimeTableMap.put(stationId, timeTable);
+        }
+        return timeTable;
     }
 
 }

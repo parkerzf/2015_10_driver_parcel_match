@@ -71,4 +71,15 @@ public class DriverConfig {
         return nextOfferId++;
     }
 
+    public TimeExpandedGraph getTimeExpandedGraph() {
+        return timeExpandedGraph;
+    }
+
+    public Offer getOfferById(int offerId) {
+        return offerMap.get(offerId);
+    }
+
+    public void addOffer(Offer offer) {
+        offerMap.put(offer.getId(), offer);
+    }
 }

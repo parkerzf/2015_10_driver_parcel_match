@@ -1,9 +1,11 @@
 package nl.twente.bms.model;
 
 
+import nl.twente.bms.algo.struct.TimeExpandedGraph;
 import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.conf.ParcelConfig;
 import nl.twente.bms.model.conf.StationConfig;
+import nl.twente.bms.model.elem.Parcel;
 import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,10 +49,11 @@ public class MatchingModel {
     private double weightArrivalTime;
     private double weightExtraTime;
 
-    public MatchingModel() {
+    public MatchingModel(String confFilePath) {
+        load(confFilePath);
     }
 
-    public void load(String confFilePath) {
+    private void load(String confFilePath) {
         ExcelHandler excelHandler = new ExcelHandler(confFilePath);
         id = Integer.parseInt(excelHandler.xlsread("Input", 1, 16));
         numStations = Integer.parseInt(excelHandler.xlsread("Input", 1, 2));
@@ -58,7 +61,7 @@ public class MatchingModel {
         numParcels = Integer.parseInt(excelHandler.xlsread("Input", 1, 3));
 
         String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
-        stationNameIndexMap = new HashMap<String, Integer>(numStations);
+        stationNameIndexMap = new HashMap<>(numStations);
         for (int i = 0; i < stationNames.length; i++) {
             stationNameIndexMap.put(stationNames[i], i + 1);
         }
@@ -88,6 +91,16 @@ public class MatchingModel {
         parcelConfig = new ParcelConfig(numParcels, excelHandler, stationNameIndexMap);
 
         excelHandler.close();
+    }
+
+    /**
+     * solve the model by assigning parcels to drivers
+     */
+    public void solve(){
+        TimeExpandedGraph tGraph = driverConfig.getTimeExpandedGraph();
+        for(Parcel parcel: parcelConfig.getParcelSortedList()){
+            tGraph.assignParcel(parcel, driverConfig);
+        }
     }
 
     public int getId() {

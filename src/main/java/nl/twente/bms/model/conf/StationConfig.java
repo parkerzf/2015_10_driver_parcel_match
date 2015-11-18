@@ -53,6 +53,7 @@ public class StationConfig {
             }
         }
         stationGraph.setVerticesLabel(vLabel);
+        stationGraph.computeAllSourceShortestDistances();
     }
 
     public StationGraph getStationGraph() {

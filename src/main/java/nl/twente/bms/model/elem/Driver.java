@@ -1,6 +1,7 @@
 package nl.twente.bms.model.elem;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,6 +39,8 @@ public class Driver {
         this.holdDuration = holdDuration;
         this.speed = speed;
         this.capacity = capacity;
+
+        this.offers = new ArrayList<>();
     }
 
     public int getId() {
@@ -81,11 +84,13 @@ public class Driver {
     }
 
     public Offer createInitOffer(int offerId) {
-        return new Offer(offerId, getSource(), getTarget(), getDepartureTime(), getCapacity(), this);
+        Offer offer = new Offer(offerId, getSource(), getTarget(), getDepartureTime(), getCapacity(), this);
+        offers.add(offer);
+        return offer;
     }
 
     public Offer createNextOffer(Offer currentOffer, int nextOfferId) {
-        //TODO it should be created based on time expaned graph info
+        //TODO it should be created based on time expanded graph info
         return null;
     }
 

@@ -51,4 +51,8 @@ public class ParcelConfig {
         logger.debug("Parcel sort list size: {}.", parcelSortedList.size());
         logger.debug("The most costly parcel: {}.", parcelSortedList.get(0));
     }
+
+    public ArrayList<Parcel> getParcelSortedList() {
+        return parcelSortedList;
+    }
 }

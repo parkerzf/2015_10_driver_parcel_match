@@ -2,11 +2,15 @@ package nl.twente.bms.algo.struct;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+import grph.algo.distance.DistanceMatrix;
 import grph.in_memory.InMemoryGrph;
 import grph.path.Path;
+import grph.path.SearchResultWrappedPath;
 import grph.properties.NumericalProperty;
+import nl.twente.bms.algo.DijkstraEnhancedAlgorithm;
 import nl.twente.bms.algo.MaxDetourPaths;
 import nl.twente.bms.model.elem.Offer;
+
 
 import java.util.Collection;
 
@@ -20,9 +24,19 @@ public class StationGraph extends InMemoryGrph {
     private final NumericalProperty weightProperty;
     private final Table<Integer, Integer, Integer> directDistanceTable;
 
+    private DistanceMatrix shortestDistances;
+
     public StationGraph() {
         weightProperty = new NumericalProperty("weight", 16, 65535);
         directDistanceTable = HashBasedTable.create();
+    }
+
+    public void computeAllSourceShortestDistances(){
+        shortestDistances = new DijkstraEnhancedAlgorithm(getWeightProperty()).computeDistanceMatrix(this);
+    }
+
+    public NumericalProperty getWeightProperty() {
+        return weightProperty;
     }
 
     public int getEdgeWeight(int e) {
@@ -51,16 +65,26 @@ public class StationGraph extends InMemoryGrph {
     }
 
     /**
-     * Get the shortest path from source to destination
+     * Get the shortest distance from source to destination
      *
      * @param source
      * @param destination
-     * @return shortest path
+     * @return shortest distance
      */
-    public Path getShortestPath(int source, int destination) {
-        return getShortestPath(source, destination, weightProperty);
+    public int getShortestDistance(int source, int destination) {
+        if(shortestDistances != null){
+            return (int) shortestDistances.getDistance(destination, source);
+        }
+        else{
+            return getDistance(getShortestPath(source, destination));
+        }
     }
 
+
+    public Path getShortestPath(int source, int destination) {
+        return new SearchResultWrappedPath(new DijkstraEnhancedAlgorithm(getWeightProperty())
+                .compute(this, source), source, destination);
+    }
 
     /**
      * Get the path distance by adding the edge weight
@@ -68,7 +92,7 @@ public class StationGraph extends InMemoryGrph {
      * @param path the path on the station graph
      * @return the distance of the path
      */
-    public int getDistance(Path path) {
+    private int getDistance(Path path) {
         int distance = 0;
         for (int i = 1; i < path.getNumberOfVertices(); i++) {
             int v1 = path.getVertexAt(i - 1);
@@ -80,14 +104,7 @@ public class StationGraph extends InMemoryGrph {
     }
 
     public Collection<WeightedSmartPath> getMaxDetourPaths(int source, int destination, double maxDetour) {
-        Path shortestPath = getShortestPath(source, destination);
-        int shortestWeight = 0;
-        for (int i = 1; i < shortestPath.getNumberOfVertices(); i++) {
-            int v1 = shortestPath.getVertexAt(i - 1);
-            int v2 = shortestPath.getVertexAt(i);
-            int edge = getEdgesConnecting(v1, v2).toIntArray()[0];
-            shortestWeight += getEdgeWeight(edge);
-        }
+        int shortestWeight = getShortestDistance(source, destination);
 
         double maxDetourWeight = shortestWeight * (1 + maxDetour);
 
@@ -102,10 +119,9 @@ public class StationGraph extends InMemoryGrph {
      * @return the feasible status of this detour path
      */
     public boolean isFeasible(Offer offer, int detourVertex) {
-        //TODO compute all pair shortest Path for all the driver offer's sources
-        int distanceSourceDetourVertex = getDistance(getShortestPath(offer.getSource(), detourVertex));
-        int distanceDetourVertexTarget = getDistance(getShortestPath(detourVertex, offer.getTarget()));
-        int distanceSourceTarget = getDistance(getShortestPath(offer.getSource(), offer.getTarget()));
+        int distanceSourceDetourVertex = getShortestDistance(offer.getSource(), detourVertex);
+        int distanceDetourVertexTarget = getShortestDistance(detourVertex, offer.getTarget());
+        int distanceSourceTarget = getShortestDistance(offer.getSource(), offer.getTarget());
 
         // detour feasibility
         if (distanceSourceDetourVertex + distanceDetourVertexTarget
@@ -124,10 +140,10 @@ public class StationGraph extends InMemoryGrph {
      * @return the feasible status of this detour
      */
     public boolean isFeasible(Offer offer, int detourSource, int detourTarget) {
-        int distanceSourceDetourSource = getDistance(getShortestPath(offer.getSource(), detourSource));
-        int distanceDetourSourceDetourTarget = getDistance(getShortestPath(detourSource, detourTarget));
-        int distanceDetourTargetTarget = getDistance(getShortestPath(detourTarget, offer.getTarget()));
-        int distanceSourceTarget = getDistance(getShortestPath(offer.getSource(), offer.getTarget()));
+        int distanceSourceDetourSource = getShortestDistance(offer.getSource(), detourSource);
+        int distanceDetourSourceDetourTarget = getShortestDistance(detourSource, detourTarget);
+        int distanceDetourTargetTarget = getShortestDistance(detourTarget, offer.getTarget());
+        int distanceSourceTarget = getShortestDistance(offer.getSource(), offer.getTarget());
 
         // detour feasibility
         if (distanceSourceDetourSource + distanceDetourSourceDetourTarget
@@ -149,8 +165,7 @@ public class StationGraph extends InMemoryGrph {
      * @return
      */
     public int getDuration(Offer offer, int source, int target) {
-        Path path = getShortestPath(source, target);
-        return offer.getDuration(getDistance(path));
+        return offer.getDuration(getShortestDistance(source, target));
     }
 
     /**
@@ -162,5 +177,4 @@ public class StationGraph extends InMemoryGrph {
     public String getLabel(int vertex) {
         return this.getVertexLabelProperty().getValueAsString(vertex);
     }
-
 }

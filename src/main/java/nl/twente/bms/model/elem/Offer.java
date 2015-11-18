@@ -11,7 +11,7 @@ public class Offer {
 
     private Driver driver;
 
-    private boolean isFixed; //???
+    //private boolean isFixed; //???
 
     private int source;
     private int target;
@@ -66,6 +66,10 @@ public class Offer {
 
     public int getCapacity() {
         return capacity;
+    }
+
+    public Driver getDriver() {
+        return driver;
     }
 
     public int getDuration(int distance) {
