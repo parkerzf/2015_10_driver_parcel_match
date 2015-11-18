@@ -1,7 +1,15 @@
 package nl.twente.bms;
 
+import jxl.Workbook;
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 import nl.twente.bms.utils.ExcelHandler;
 
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -47,9 +55,10 @@ public class RandomGen {
         return null;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, WriteException {
         ExcelHandler excelHandler = new ExcelHandler("Locations.xls");
         int numCities = Integer.parseInt(excelHandler.xlsread("Blad1", 1, 0));
+        int numDrivers = Integer.parseInt(excelHandler.xlsread("Blad1", 3, 0));
 
         List<Weighting> weightings = new ArrayList<>();
         for(int i = 1; i < numCities + 1 ; i++){
@@ -57,11 +66,22 @@ public class RandomGen {
             int weight = Integer.parseInt(excelHandler.xlsread("Blad1", 3, i));
             weightings.add(new Weighting(cityName, weight));
         }
-        String start = weightedRandom(weightings);
-        String end = null;
-        while((end = weightedRandom(weightings)).equals(start)){}
 
-        System.out.println("Start: " + start);
-        System.out.println("End: " + end);
+        excelHandler.close();
+
+
+        WritableWorkbook wworkbook;
+        wworkbook = Workbook.createWorkbook(new File("drivers.xls"));
+        WritableSheet wsheet = wworkbook.createSheet("drivers", 0);
+        for(int i = 0; i < numDrivers; i++){
+            String start = weightedRandom(weightings);
+            String end = null;
+            while((end = weightedRandom(weightings)).equals(start)){}
+
+            wsheet.addCell(new Label(0, i, start));
+            wsheet.addCell(new Label(1, i, end));
+        }
+        wworkbook.write();
+        wworkbook.close();
     }
 }
