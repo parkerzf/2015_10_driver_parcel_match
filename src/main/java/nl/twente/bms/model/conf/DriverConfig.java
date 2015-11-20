@@ -1,6 +1,7 @@
 package nl.twente.bms.model.conf;
 
 import com.carrotsearch.hppc.*;
+import jxl.write.*;
 import nl.twente.bms.algo.struct.WeightedGrph;
 import nl.twente.bms.algo.struct.WeightedSmartPath;
 import nl.twente.bms.model.elem.Driver;
@@ -8,6 +9,7 @@ import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -24,6 +26,7 @@ public class DriverConfig {
     private double avgSpeed;
 
     private IntObjectMap<Driver> driverMap;
+    private ArrayList<Driver> driverList;
 
     public DriverConfig(int numStations, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
                         WeightedGrph stationGrph) {
@@ -43,6 +46,7 @@ public class DriverConfig {
 
         //index driver object in driver map
         driverMap = new IntObjectOpenHashMap<Driver>(numStations);
+        driverList = new ArrayList<Driver>(numStations);
         for(int i =0; i < numStations; i++){
             Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
                     stationNameIndexMap.get(startStationArray[i]),
@@ -53,6 +57,7 @@ public class DriverConfig {
 
             setMaxDetourPaths(driver, stationGrph);
             driverMap.put(Integer.parseInt(idStrArray[i]), driver);
+            driverList.add(driver);
             logger.debug(driver.toString());
         }
 
@@ -67,5 +72,9 @@ public class DriverConfig {
         Collection<WeightedSmartPath> maxDetourPaths = stationGrph.getMaxDetourPaths(driver.getStartStationId(),
                 driver.getEndStationId(), maxDetour);
         driver.setMaxDetourPaths(maxDetourPaths);
+    }
+
+    public ArrayList<Driver> getDriverList() {
+        return driverList;
     }
 }

@@ -1,6 +1,10 @@
 package nl.twente.bms.model;
 
 
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
 import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.conf.ParcelConfig;
 import nl.twente.bms.model.conf.StationConfig;
@@ -28,6 +32,7 @@ public class MatchingModel {
     private int numDrivers;
     private int numParcels;
 
+    private String[] stationNames;
     private HashMap<String, Integer> stationNameIndexMap;
 
     /**
@@ -57,7 +62,7 @@ public class MatchingModel {
         numDrivers = Integer.parseInt(excelHandler.xlsread("Input", 1, 0));
         numParcels = Integer.parseInt(excelHandler.xlsread("Input", 1, 3));
 
-        String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
+        stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
         stationNameIndexMap = new HashMap<String, Integer>(numStations);
         for(int i = 0; i < stationNames.length; i++) {
             stationNameIndexMap.put(stationNames[i], i+1);
@@ -144,5 +149,20 @@ public class MatchingModel {
 
     public double getWeightExtraTime() {
         return weightExtraTime;
+    }
+
+    public String[] getStationNames() {
+        return stationNames;
+    }
+
+
+    public void setHeader(WritableSheet sheet) throws WriteException {
+        int index = 1;
+        for(String stationName: stationNames){
+            sheet.addCell(new Label(0, index, stationName));
+            sheet.addCell(new Label(index, 0, stationName));
+            index++;
+        }
+
     }
 }

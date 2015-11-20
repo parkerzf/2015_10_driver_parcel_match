@@ -1,8 +1,16 @@
 package nl.twente.bms.model.elem;
 
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import jxl.Workbook;
+import jxl.write.*;
+import jxl.write.Number;
+import jxl.write.biff.RowsExceededException;
+import nl.twente.bms.algo.struct.WeightedGrph;
 import nl.twente.bms.algo.struct.WeightedSmartPath;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -66,6 +74,17 @@ public class Driver {
         this.maxDetourPaths = maxDetourPaths;
     }
 
+    public void setSpreadSheetByMaxDetourPaths(WritableSheet sheet) throws WriteException {
+        if(maxDetourPaths == null) return;
+
+        for(WeightedSmartPath path: maxDetourPaths){
+            for(int i = 1; i < path.getNumberOfVertices(); i++){
+                int u = path.getVertexAt(i - 1);
+                int v = path.getVertexAt(i);
+                sheet.addCell(new Number(v, u, 1));
+            }
+        }
+    }
 
     public String toString(){
         return String.format("Driver[%d]: %d->%d, #Paths: %d, (%d, %d), %d", id, startStationId, endStationId,

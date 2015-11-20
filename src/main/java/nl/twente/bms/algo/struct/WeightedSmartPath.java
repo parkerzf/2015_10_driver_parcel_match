@@ -155,4 +155,8 @@ public class WeightedSmartPath extends AbstractPath {
             return b.toString();
         }
     }
+
+    public IntArrayList getEdgeList() {
+        return edgeList;
+    }
 }
