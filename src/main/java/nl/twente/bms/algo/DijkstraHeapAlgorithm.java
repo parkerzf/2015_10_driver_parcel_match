@@ -1,5 +1,6 @@
 package nl.twente.bms.algo;
 
+import com.carrotsearch.hppc.cursors.IntCursor;
 import grph.Grph;
 import grph.algo.search.GraphSearchListener;
 import grph.algo.search.SearchResult;
@@ -7,50 +8,26 @@ import grph.algo.search.WeightedSingleSourceSearchAlgorithm;
 import grph.algo.topology.ClassicalGraphs;
 import grph.properties.NumericalProperty;
 import nl.twente.bms.algo.struct.FibonacciHeap;
-import nl.twente.bms.algo.struct.TimeTableImproved;
-import nl.twente.bms.model.conf.DriverConfig;
-import nl.twente.bms.model.elem.Offer;
 import toools.NotYetImplementedException;
 import toools.set.IntSet;
-
-import com.carrotsearch.hppc.cursors.IntCursor;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Computes the shortest paths in the graph, using the enhanced Dijkstra algorithm.
+ * Computes the shortest paths in the graph, using the Dijkstra algorithm with FibonacciHeap
  *
  * @author zhaofeng
  * @since 1.0
  */
-public class DijkstraEnhancedAlgorithm extends WeightedSingleSourceSearchAlgorithm
+public class DijkstraHeapAlgorithm extends WeightedSingleSourceSearchAlgorithm
 {
-    NumericalProperty offerIdProperty;
-    IntSet markedRemoveOfferIds;
-
-    public DijkstraEnhancedAlgorithm(NumericalProperty weightProperty)
-    {
-        this(weightProperty, null, null);
-    }
-
-    public DijkstraEnhancedAlgorithm(NumericalProperty weightProperty,
-                                     NumericalProperty offerIdProperty,
-                                     IntSet markedRemoveOfferIds)
-    {
+    public DijkstraHeapAlgorithm(NumericalProperty weightProperty) {
         super(weightProperty);
-        this.offerIdProperty = offerIdProperty;
-        this.markedRemoveOfferIds = markedRemoveOfferIds;
     }
 
     @Override
     public SearchResult compute(Grph g, int source, Grph.DIRECTION d, GraphSearchListener listener){
-        return compute(g, source, null, 0, d, listener);
-    }
-
-
-    public SearchResult compute(Grph g, int source, DriverConfig driverConfig, int volume, Grph.DIRECTION d, GraphSearchListener listener)
-    {
         if (d != Grph.DIRECTION.out)
             throw new NotYetImplementedException("this direction is not supported: " + d.name());
 
@@ -82,13 +59,6 @@ public class DijkstraEnhancedAlgorithm extends WeightedSingleSourceSearchAlgorit
 
             for (int n : neighbors[minVertex])
             {
-                if(markedRemove(n)){
-                    g.removeVertex(n);
-                    continue;
-                }
-                if(!haveCapacity(n, driverConfig, volume)){
-                    continue;
-                }
                 int newDistance = r.distances[minVertex] + weight(g, minVertex, n, getWeightProperty());
 
                 if (newDistance < r.distances[n])
@@ -105,19 +75,7 @@ public class DijkstraEnhancedAlgorithm extends WeightedSingleSourceSearchAlgorit
             listener.searchCompleted();
 
         return r;
-    }
 
-    private boolean haveCapacity(int vertexId, DriverConfig config, int volume) {
-        if(offerIdProperty == null || config == null || volume <= 0) return true;
-        Offer offer = config.getOfferById(offerIdProperty.getValueAsInt(vertexId));
-        return offer.getCapacity() >= volume;
-    }
-
-    private boolean markedRemove(int vertexId) {
-        if(offerIdProperty == null || markedRemoveOfferIds == null) return false;
-        int offerId = offerIdProperty.getValueAsInt(vertexId);
-        if(markedRemoveOfferIds.contains(offerId)) return true;
-        return false;
     }
 
     private int weight(Grph g, int src, int dest, NumericalProperty weightProperty)
@@ -162,7 +120,7 @@ public class DijkstraEnhancedAlgorithm extends WeightedSingleSourceSearchAlgorit
         g.setEdgesLabel(weightProperty);
         g.display();
 
-        SearchResult r = new DijkstraEnhancedAlgorithm(weightProperty).compute(g, 0, new GraphSearchListener() {
+        SearchResult r = new DijkstraHeapAlgorithm(weightProperty).compute(g, 0, new GraphSearchListener() {
 
             @Override
             public DECISION vertexFound(int v)

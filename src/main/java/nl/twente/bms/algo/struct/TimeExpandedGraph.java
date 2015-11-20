@@ -2,12 +2,10 @@ package nl.twente.bms.algo.struct;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import grph.algo.search.GraphSearchListener;
 import grph.path.Path;
-import grph.path.SearchResultWrappedPath;
 import grph.properties.NumericalProperty;
 import grph.properties.StringProperty;
-import nl.twente.bms.algo.DijkstraEnhancedAlgorithm;
+import nl.twente.bms.algo.DijkstraTimeExpandedAlgorithm;
 import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.elem.Offer;
 import nl.twente.bms.model.elem.Parcel;
@@ -30,21 +28,24 @@ public class TimeExpandedGraph extends StationGraph {
     private final StringProperty nodeLabelProperty;
 
     private final StationGraph stationGraph;
+    private final DriverConfig driverConfig;
     // stationId --> timeTable
     private IntObjectMap<TimeTableImproved> stationTimeTableMap;
 
     private IntSet markRemovedOfferIds;
 
-    public TimeExpandedGraph(StationGraph stationGraph) {
+    public TimeExpandedGraph(StationGraph stationGraph, DriverConfig driverConfig) {
         nodeTimeProperty = new NumericalProperty("time", 11, 1441);
         nodeStationIdProperty = new NumericalProperty("station", 16, 65535);
         nodeOfferIdProperty = new NumericalProperty("offer", 16, 65535);
         nodeLabelProperty = new StringProperty("label");
 
         markRemovedOfferIds = new IntHashSet();
+        stationTimeTableMap = new IntObjectOpenHashMap<>(stationGraph.getNumberOfVertices());
 
         this.stationGraph = stationGraph;
-        stationTimeTableMap = new IntObjectOpenHashMap<>(stationGraph.getNumberOfVertices());
+        this.driverConfig = driverConfig;
+
     }
 
     /**
@@ -133,38 +134,47 @@ public class TimeExpandedGraph extends StationGraph {
         return vertexId;
     }
 
-    public void assignParcel(Parcel parcel, DriverConfig driverConfig){
+    public void assignParcel(Parcel parcel){
         TimeTableImproved startTimeTable = getTimeTable(parcel.getStartStationId());
-        //TODO change it to consider markedRemoveOffers
-        int startVertexId = startTimeTable.findFirstTimeVertex(parcel.getEarliestDepartureTime());
+
+        int startVertexId = -1;
+        do{
+            if(startVertexId != -1) this.removeVertex(startVertexId);
+            startVertexId = startTimeTable.findFirstTimeVertex(parcel.getEarliestDepartureTime());
+        }
+        while(startVertexId == -1 || isMarkedRemoved(startVertexId));
 
         TimeTableImproved endTimeTable = getTimeTable(parcel.getEndStationId());
-        //TODO change it to consider markedRemoveOffers
-        int endVertexId = endTimeTable.findLastTimeVertex(parcel.getLatestArrivalTime());
+
+        int endVertexId = -1;
+        do{
+            if(startVertexId != -1) this.removeVertex(startVertexId);
+            endVertexId = endTimeTable.findLastTimeVertex(parcel.getLatestArrivalTime());
+        }
+        while(endVertexId == -1 || isMarkedRemoved(endVertexId));
+
         if(startVertexId != -1 && endVertexId != -1){
-            //TODO change endVertexId to endStationId, so that we can find the earliest vertices in the endStation
-            Path path = getShortestPath(startVertexId, endVertexId, driverConfig, parcel.getVolume());
+            Path path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
             if(path != null){
                 parcel.setPath(path);
-                updateOffers(path, driverConfig, parcel);
+                updateOffers(path, parcel);
             }
         }
     }
 
-    public Path getShortestPath(int source, int destination, DriverConfig driverConfig, int volume) {
-        return new SearchResultWrappedPath(new DijkstraEnhancedAlgorithm(
-                getWeightProperty(), nodeOfferIdProperty, markRemovedOfferIds)
-                .compute(this, source, driverConfig, volume, DIRECTION.out, null), source, destination);
+    public Path getShortestPath(int source, int destinationStationId, int volume) {
+        return new DijkstraTimeExpandedAlgorithm(this)
+                .compute(source, destinationStationId, volume, DIRECTION.out, null);
     }
 
     /**
      * Update offers on the assigned Path by marking them as removed,
      * and the drivers of the updated offers add some new offers
-     *  @param path the assigned path
-     * @param driverConfig
+     *
+     * @param path the assigned path
      * @param parcel
      */
-    private void updateOffers(Path path, DriverConfig driverConfig, Parcel parcel) {
+    private void updateOffers(Path path, Parcel parcel) {
 
         // update capacities for the offers in the assigned path
         int preVertexId = -1;
@@ -204,11 +214,28 @@ public class TimeExpandedGraph extends StationGraph {
         markRemovedOfferIds.add(offer.getId());
     }
 
+    public boolean isMarkedRemoved(int vertexId) {
+        int offerId = nodeOfferIdProperty.getValueAsInt(vertexId);
+        if(markRemovedOfferIds.contains(offerId)) return true;
+        return false;
+    }
+
+    public boolean hasCapacity(int vertexId, int volume) {
+        if(volume <= 0) return true;
+        Offer offer = driverConfig.getOfferById(nodeOfferIdProperty.getValueAsInt(vertexId));
+        return offer.getCapacity() >= volume;
+    }
+
     public void removeVertex(int vertexId){
         super.removeVertex(vertexId);
         TimeTableImproved timeTable = getTimeTable(nodeStationIdProperty.getValueAsInt(vertexId));
         timeTable.removeTimeVertex(vertexId, nodeTimeProperty);
     }
+
+    public int getStationIdFromVertexId(int vertexId){
+        return nodeStationIdProperty.getValueAsInt(vertexId);
+    }
+
     private TimeTableImproved getTimeTable(int stationId){
         TimeTableImproved timeTable = stationTimeTableMap.get(stationId);
         if (timeTable == null) {
@@ -216,6 +243,11 @@ public class TimeExpandedGraph extends StationGraph {
             stationTimeTableMap.put(stationId, timeTable);
         }
         return timeTable;
+    }
+
+
+    public NumericalProperty getOfferIdProperty() {
+        return nodeOfferIdProperty;
     }
 
 }

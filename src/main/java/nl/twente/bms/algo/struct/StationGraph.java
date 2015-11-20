@@ -7,7 +7,7 @@ import grph.in_memory.InMemoryGrph;
 import grph.path.Path;
 import grph.path.SearchResultWrappedPath;
 import grph.properties.NumericalProperty;
-import nl.twente.bms.algo.DijkstraEnhancedAlgorithm;
+import nl.twente.bms.algo.DijkstraHeapAlgorithm;
 import nl.twente.bms.algo.MaxDetourPaths;
 import nl.twente.bms.model.elem.Offer;
 
@@ -32,7 +32,7 @@ public class StationGraph extends InMemoryGrph {
     }
 
     public void computeAllSourceShortestDistances(){
-        shortestDistances = new DijkstraEnhancedAlgorithm(getWeightProperty()).computeDistanceMatrix(this);
+        shortestDistances = new DijkstraHeapAlgorithm(getWeightProperty()).computeDistanceMatrix(this);
     }
 
     public NumericalProperty getWeightProperty() {
@@ -82,7 +82,7 @@ public class StationGraph extends InMemoryGrph {
 
 
     public Path getShortestPath(int source, int destination) {
-        return new SearchResultWrappedPath(new DijkstraEnhancedAlgorithm(getWeightProperty())
+        return new SearchResultWrappedPath(new DijkstraHeapAlgorithm(getWeightProperty())
                 .compute(this, source), source, destination);
     }
 
