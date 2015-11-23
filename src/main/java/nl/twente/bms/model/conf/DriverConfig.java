@@ -42,7 +42,7 @@ public class DriverConfig {
         // String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numDrivers);
         String[] capacityArray = excelHandler.xlsread("Input", 10, 1, numDrivers);
 
-        timeExpandedGraph = new TimeExpandedGraph(stationGraph);
+        timeExpandedGraph = new TimeExpandedGraph(stationGraph, this);
 
         //index driver object in driver map
         driverMap = new IntObjectOpenHashMap<>(numDrivers);

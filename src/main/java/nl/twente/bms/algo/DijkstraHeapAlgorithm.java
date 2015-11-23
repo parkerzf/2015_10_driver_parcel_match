@@ -8,6 +8,8 @@ import grph.algo.search.WeightedSingleSourceSearchAlgorithm;
 import grph.algo.topology.ClassicalGraphs;
 import grph.properties.NumericalProperty;
 import nl.twente.bms.algo.struct.FibonacciHeap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import toools.NotYetImplementedException;
 import toools.set.IntSet;
 
@@ -22,23 +24,26 @@ import java.util.Map;
  */
 public class DijkstraHeapAlgorithm extends WeightedSingleSourceSearchAlgorithm
 {
+    private static final Logger logger = LoggerFactory.getLogger(DijkstraHeapAlgorithm.class);
     public DijkstraHeapAlgorithm(NumericalProperty weightProperty) {
         super(weightProperty);
     }
 
     @Override
     public SearchResult compute(Grph g, int source, Grph.DIRECTION d, GraphSearchListener listener){
+
         if (d != Grph.DIRECTION.out)
             throw new NotYetImplementedException("this direction is not supported: " + d.name());
 
         SearchResult r = new SearchResult(g.getVertices().getGreatest() + 1);
         FibonacciHeap<Integer> notYetVisitedVertices = new FibonacciHeap<>();
         Map<Integer, FibonacciHeap.Entry<Integer>> entries = new HashMap<>();
-        for (int i = 0; i < r.distances.length; ++i)
-        {
-            r.distances[i] = Integer.MAX_VALUE;
-            r.predecessors[i] = -1;
-            entries.put(i, notYetVisitedVertices.enqueue(i, r.distances[i]));
+
+        for(IntCursor vertexIdCursor: g.getVertices()){
+            int vertexId = vertexIdCursor.value;
+            r.distances[vertexId] = Integer.MAX_VALUE;
+            r.predecessors[vertexId] = -1;
+            entries.put(vertexId, notYetVisitedVertices.enqueue(vertexId, r.distances[vertexId]));
         }
 
         r.distances[source] = 0;
@@ -57,18 +62,17 @@ public class DijkstraHeapAlgorithm extends WeightedSingleSourceSearchAlgorithm
             if (listener != null)
                 listener.vertexFound(minVertex);
 
-            for (int n : neighbors[minVertex])
-            {
+            for (int n : neighbors[minVertex]) {
                 int newDistance = r.distances[minVertex] + weight(g, minVertex, n, getWeightProperty());
 
-                if (newDistance < r.distances[n])
-                {
+                if (newDistance < r.distances[n]) {
                     r.predecessors[n] = minVertex;
                     r.distances[n] = newDistance;
-                    FibonacciHeap.Entry<Integer>  entry = entries.get(n);
+                    FibonacciHeap.Entry<Integer> entry = entries.get(n);
                     notYetVisitedVertices.decreaseKey(entry, r.distances[n]);
                 }
             }
+
         }
 
         if (listener != null)

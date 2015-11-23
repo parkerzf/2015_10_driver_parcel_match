@@ -98,8 +98,11 @@ public class MatchingModel {
      */
     public void solve(){
         TimeExpandedGraph tGraph = driverConfig.getTimeExpandedGraph();
+        int count = 0;
         for(Parcel parcel: parcelConfig.getParcelSortedList()){
-            tGraph.assignParcel(parcel, driverConfig);
+            System.out.println("Assign parcel: " + parcel);
+            tGraph.assignParcel(parcel);
+            if(count++ >= 1) break;
         }
     }
 

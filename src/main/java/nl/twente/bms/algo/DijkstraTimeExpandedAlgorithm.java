@@ -39,12 +39,14 @@ public class DijkstraTimeExpandedAlgorithm
         FibonacciHeap<Integer> notYetVisitedVertices = new FibonacciHeap<>();
         Map<Integer, FibonacciHeap.Entry<Integer>> entries = new HashMap<>();
         int destination = -1;
-        for (int i = 0; i < r.distances.length; ++i)
-        {
-            r.distances[i] = Integer.MAX_VALUE;
-            r.predecessors[i] = -1;
-            entries.put(i, notYetVisitedVertices.enqueue(i, r.distances[i]));
+
+        for(IntCursor vertexIdCursor: tGraph.getVertices()){
+            int vertexId = vertexIdCursor.value;
+            r.distances[vertexId] = Integer.MAX_VALUE;
+            r.predecessors[vertexId] = -1;
+            entries.put(vertexId, notYetVisitedVertices.enqueue(vertexId, r.distances[vertexId]));
         }
+
 
         r.distances[source] = 0;
         notYetVisitedVertices.decreaseKey(entries.get(source), 0);

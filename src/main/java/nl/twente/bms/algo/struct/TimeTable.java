@@ -13,10 +13,10 @@ import java.util.TreeMap;
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
  */
-public class TimeTableImproved {
+public class TimeTable {
     // timeInMins to A list of time vertices map
     private TreeMap<Integer, IntArrayList> timeSlots;
-    public TimeTableImproved() {
+    public TimeTable() {
         timeSlots = new TreeMap<>();
     }
 

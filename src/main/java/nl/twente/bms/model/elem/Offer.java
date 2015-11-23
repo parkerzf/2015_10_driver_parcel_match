@@ -28,6 +28,16 @@ public class Offer {
         this.driver = driver;
     }
 
+    public Offer(int id, Offer offer, int volume){
+        this.id = id;
+        this.source = offer.source;
+        this.target = offer.target;
+        this.departureTime = offer.departureTime;
+        this.capacity = offer.capacity - volume;
+        assert capacity > 0;
+        this.driver = offer.driver;
+    }
+
     public int getId() {
         return id;
     }

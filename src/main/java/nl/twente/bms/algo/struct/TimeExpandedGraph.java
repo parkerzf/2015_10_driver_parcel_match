@@ -30,7 +30,7 @@ public class TimeExpandedGraph extends StationGraph {
     private final StationGraph stationGraph;
     private final DriverConfig driverConfig;
     // stationId --> timeTable
-    private IntObjectMap<TimeTableImproved> stationTimeTableMap;
+    private IntObjectMap<TimeTable> stationTimeTableMap;
 
     private IntSet markRemovedOfferIds;
 
@@ -120,7 +120,7 @@ public class TimeExpandedGraph extends StationGraph {
      * @return the time vertex id
      */
     private int addTimeVertex(int time, int stationId, Offer offer) {
-        TimeTableImproved timeTable = getTimeTable(stationId);
+        TimeTable timeTable = getTimeTable(stationId);
         int vertexId = timeTable.getTimeVertex(time, offer, nodeOfferIdProperty);
         if (vertexId != -1) return vertexId;
 
@@ -135,7 +135,7 @@ public class TimeExpandedGraph extends StationGraph {
     }
 
     public void assignParcel(Parcel parcel){
-        TimeTableImproved startTimeTable = getTimeTable(parcel.getStartStationId());
+        TimeTable startTimeTable = getTimeTable(parcel.getStartStationId());
 
         int startVertexId = -1;
         do{
@@ -144,18 +144,20 @@ public class TimeExpandedGraph extends StationGraph {
         }
         while(startVertexId == -1 || isMarkedRemoved(startVertexId));
 
-        TimeTableImproved endTimeTable = getTimeTable(parcel.getEndStationId());
+        TimeTable endTimeTable = getTimeTable(parcel.getEndStationId());
 
-        int endVertexId = -1;
-        do{
-            if(startVertexId != -1) this.removeVertex(startVertexId);
-            endVertexId = endTimeTable.findLastTimeVertex(parcel.getLatestArrivalTime());
-        }
-        while(endVertexId == -1 || isMarkedRemoved(endVertexId));
+//        int endVertexId = -1;
+//        do{
+//            if(endVertexId != -1) this.removeVertex(endVertexId);
+//            endVertexId = endTimeTable.findLastTimeVertex(parcel.getLatestArrivalTime());
+//        }
+//        while(endVertexId == -1 || isMarkedRemoved(endVertexId));
 
-        if(startVertexId != -1 && endVertexId != -1){
+//        if(startVertexId != -1 && endVertexId != -1){
+        if(startVertexId != -1){
             Path path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
             if(path != null){
+                // path.setColor(this, 6);
                 parcel.setPath(path);
                 updateOffers(path, parcel);
             }
@@ -175,38 +177,25 @@ public class TimeExpandedGraph extends StationGraph {
      * @param parcel
      */
     private void updateOffers(Path path, Parcel parcel) {
-
         // update capacities for the offers in the assigned path
-        int preVertexId = -1;
-        int startVertexId = -1;
-        int endVertexId = -1;
-        int prevOfferId = -1;
+        int prevOfferId = - 1;
         int newOfferId = -1;
         for (int i = 0; i < path.getNumberOfVertices(); i++) {
             int currentVertex = path.getVertexAt(i);
             int currentOfferId = nodeOfferIdProperty.getValueAsInt(currentVertex);
-
             //a new offer hop
             if(currentOfferId != prevOfferId){
-                if (newOfferId != -1) {
-                    Offer prevOffer = driverConfig.getOfferById(prevOfferId);
-                    markOfferRemoved(prevOffer);
-                    int prevCapacity = prevOffer.getCapacity() - parcel.getVolume();
-                    endVertexId = preVertexId;
-                    driverConfig.addOffer(
-                            new Offer(newOfferId,
-                                    nodeStationIdProperty.getValueAsInt(startVertexId),
-                                    nodeStationIdProperty.getValueAsInt(endVertexId),
-                                    nodeTimeProperty.getValueAsInt(startVertexId),
-                                    prevCapacity, prevOffer.getDriver()));
-                }
+                // mark current offer as removed
+                Offer curOffer = driverConfig.getOfferById(currentOfferId);
+                markOfferRemoved(curOffer);
+                // update a new offer on top of current offer
                 newOfferId = driverConfig.getNextOfferId();
-                startVertexId = currentVertex;
+                Offer newOffer = new Offer(newOfferId, curOffer, parcel.getVolume());
+                driverConfig.addOffer(newOffer);
+                System.out.println("Add new offer: " + newOffer);
             }
-
-            nodeOfferIdProperty.setValue(currentVertex, newOfferId);
-            preVertexId = currentVertex;
             prevOfferId = currentOfferId;
+            nodeOfferIdProperty.setValue(currentVertex, newOfferId);
         }
     }
 
@@ -227,8 +216,9 @@ public class TimeExpandedGraph extends StationGraph {
     }
 
     public void removeVertex(int vertexId){
+        //if(!containsVertex(vertexId)) return;
         super.removeVertex(vertexId);
-        TimeTableImproved timeTable = getTimeTable(nodeStationIdProperty.getValueAsInt(vertexId));
+        TimeTable timeTable = getTimeTable(nodeStationIdProperty.getValueAsInt(vertexId));
         timeTable.removeTimeVertex(vertexId, nodeTimeProperty);
     }
 
@@ -236,18 +226,12 @@ public class TimeExpandedGraph extends StationGraph {
         return nodeStationIdProperty.getValueAsInt(vertexId);
     }
 
-    private TimeTableImproved getTimeTable(int stationId){
-        TimeTableImproved timeTable = stationTimeTableMap.get(stationId);
+    private TimeTable getTimeTable(int stationId){
+        TimeTable timeTable = stationTimeTableMap.get(stationId);
         if (timeTable == null) {
-            timeTable = new TimeTableImproved();
+            timeTable = new TimeTable();
             stationTimeTableMap.put(stationId, timeTable);
         }
         return timeTable;
     }
-
-
-    public NumericalProperty getOfferIdProperty() {
-        return nodeOfferIdProperty;
-    }
-
 }
