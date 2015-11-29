@@ -9,6 +9,8 @@ import nl.twente.bms.algo.DijkstraTimeExpandedAlgorithm;
 import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.elem.Offer;
 import nl.twente.bms.model.elem.Parcel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import toools.set.IntHashSet;
 import toools.set.IntSet;
 
@@ -21,7 +23,7 @@ import toools.set.IntSet;
  */
 
 public class TimeExpandedGraph extends StationGraph {
-
+    private static final Logger logger = LoggerFactory.getLogger(DriverConfig.class);
     private final NumericalProperty nodeTimeProperty;
     private final NumericalProperty nodeStationIdProperty;
     private final NumericalProperty nodeOfferIdProperty;
@@ -149,7 +151,7 @@ public class TimeExpandedGraph extends StationGraph {
 //        int endVertexId = -1;
 //        do{
 //            if(endVertexId != -1) this.removeVertex(endVertexId);
-//            endVertexId = endTimeTable.findLastTimeVertex(parcel.getLatestArrivalTime());
+//            endVertexId = endTimeTable.findLastTimeVertex(parcel.getMaxDuration());
 //        }
 //        while(endVertexId == -1 || isMarkedRemoved(endVertexId));
 
@@ -157,7 +159,6 @@ public class TimeExpandedGraph extends StationGraph {
         if(startVertexId != -1){
             Path path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
             if(path != null){
-                // path.setColor(this, 6);
                 parcel.setPath(path);
                 updateOffers(path, parcel);
             }
@@ -179,23 +180,65 @@ public class TimeExpandedGraph extends StationGraph {
     private void updateOffers(Path path, Parcel parcel) {
         // update capacities for the offers in the assigned path
         int prevOfferId = - 1;
-        int newOfferId = -1;
+        int prevVertexId = -1;
+        Offer updatedOffer = null;
         for (int i = 0; i < path.getNumberOfVertices(); i++) {
-            int currentVertex = path.getVertexAt(i);
-            int currentOfferId = nodeOfferIdProperty.getValueAsInt(currentVertex);
+            int currentVertexId = path.getVertexAt(i);
+            int currentOfferId = nodeOfferIdProperty.getValueAsInt(currentVertexId);
             //a new offer hop
             if(currentOfferId != prevOfferId){
-                // mark current offer as removed
-                Offer curOffer = driverConfig.getOfferById(currentOfferId);
-                markOfferRemoved(curOffer);
-                // update a new offer on top of current offer
-                newOfferId = driverConfig.getNextOfferId();
-                Offer newOffer = new Offer(newOfferId, curOffer, parcel.getVolume());
-                driverConfig.addOffer(newOffer);
-                System.out.println("Add new offer: " + newOffer);
+                addNewOffer(prevOfferId, prevVertexId);
+                updatedOffer = updateCurrentOffer(currentOfferId, parcel);
             }
             prevOfferId = currentOfferId;
-            nodeOfferIdProperty.setValue(currentVertex, newOfferId);
+            prevVertexId = currentVertexId;
+            if(updatedOffer.isFeasible()) {
+                nodeOfferIdProperty.setValue(currentVertexId, updatedOffer.getId());
+            }
+        }
+        //add new offer for the last offer
+        addNewOffer(prevOfferId, prevVertexId);
+    }
+
+    private Offer updateCurrentOffer(int currentOfferId, Parcel parcel){
+        // mark current offer as removed
+        Offer curOffer = driverConfig.getOfferById(currentOfferId);
+        curOffer.addParcel(parcel);
+        markOfferRemoved(curOffer);
+        // update a new offer on top of current offer
+        int updatedOfferId = driverConfig.getNextOfferId();
+        Offer updatedOffer = new Offer(updatedOfferId, curOffer, parcel.getVolume());
+        if(updatedOffer.isFeasible()){
+            driverConfig.addOffer(updatedOffer);
+            System.out.println("Add updated offer: " + updatedOffer);
+            logger.debug("Add updated offer: " + updatedOffer);
+        }
+        else{
+            System.out.println("Updated offer is not feasible: " + updatedOffer);
+            logger.debug("Updated offer is not feasible: " + updatedOffer);
+        }
+        return updatedOffer;
+    }
+
+    // add a new offer starting from the end point of the prev offer
+    private void addNewOffer(int prevOfferId, int startVertexId){
+        Offer prevOffer = driverConfig.getOfferById(prevOfferId);
+        if(prevOffer != null && prevOffer.isExtendableOffer()) {
+            int nextOfferId = driverConfig.getNextOfferId();
+            Offer newOffer = new Offer(nextOfferId, prevOffer,
+                    nodeStationIdProperty.getValueAsInt(startVertexId),
+                    nodeTimeProperty.getValueAsInt(startVertexId));
+
+            if(newOffer.isFeasible()){
+                driverConfig.addOffer(newOffer);
+                addOffer(newOffer);
+                System.out.println("Add new offer: " + newOffer);
+                logger.debug("Add new offer: " + newOffer);
+            }
+            else{
+                System.out.println("New offer is not feasible: " + newOffer);
+                logger.debug("New offer is not feasible: " + newOffer);
+            }
         }
     }
 
@@ -215,8 +258,8 @@ public class TimeExpandedGraph extends StationGraph {
         return offer.getCapacity() >= volume;
     }
 
-    public void removeVertex(int vertexId){
-        //if(!containsVertex(vertexId)) return;
+    public void removeVertex(int vertexId) {
+        System.out.println("Remove vertex: " + getLabel(vertexId));
         super.removeVertex(vertexId);
         TimeTable timeTable = getTimeTable(nodeStationIdProperty.getValueAsInt(vertexId));
         timeTable.removeTimeVertex(vertexId, nodeTimeProperty);

@@ -1,6 +1,8 @@
 package nl.twente.bms.model.elem;
 
 
+import nl.twente.bms.algo.struct.StationGraph;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class Driver {
 
     private int capacity;
 
-    List<Offer> offers;
+    private List<Offer> offers;
 
     public Driver(int id, int source, int target, double epsilon, double gamma,
                   int departureTime, int holdDuration, double speed, int capacity) {
@@ -82,24 +84,24 @@ public class Driver {
     public int getDuration(int distance) {
         return (int) (distance * 60 / speed);
     }
+    public int getDistance(int duration) {
+        return (int) (speed * duration / 60);
+    }
 
-    public Offer createInitOffer(int offerId) {
-        Offer offer = new Offer(offerId, getSource(), getTarget(), getDepartureTime(), getCapacity(), this);
-        offers.add(offer);
+    public Offer createInitOffer(int offerId, StationGraph stationGraph) {
+        Offer offer = new Offer(offerId, getSource(), getTarget(), getDepartureTime(),
+                getCapacity(), this, stationGraph);
         return offer;
     }
 
-    public Offer createNextOffer(Offer currentOffer, int nextOfferId) {
-        //TODO it should be created based on time expanded graph info
-        return null;
-    }
-
-    public void assignParcel(Parcel parcel) {
-        //TODO
+    public void addOffer(Offer offer) {
+        offers.add(offer);
     }
 
     public String toString() {
         return String.format("Driver[%d]: %d->%d, Detour: %.2f, Delay: %.2f, Depart: %d, Hold: %d, Speed: %.2f, Capacity: %d",
                 id, source, target, epsilon, gamma, departureTime, holdDuration, speed, capacity);
     }
+
+
 }

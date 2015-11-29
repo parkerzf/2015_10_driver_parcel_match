@@ -59,7 +59,7 @@ public class DriverConfig {
                     Integer.parseInt(capacityArray[i]));
             driverMap.put(Integer.parseInt(idStrArray[i]), driver);
             int currentId = getNextOfferId();
-            Offer offer = driver.createInitOffer(currentId);
+            Offer offer = driver.createInitOffer(currentId, stationGraph);
             offerMap.put(currentId, offer);
             timeExpandedGraph.addOffer(offer);
             logger.debug(offer.toString());
