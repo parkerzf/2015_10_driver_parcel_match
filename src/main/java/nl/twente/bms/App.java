@@ -21,7 +21,7 @@ import java.util.ArrayList;
 public class App 
 {
     public static void main( String[] args ) throws IOException, WriteException {
-        String confFilePath = "Data.xls";
+        String confFilePath = "Data25.xls";
         MatchingModel model = new MatchingModel();
         model.load(confFilePath);
 
