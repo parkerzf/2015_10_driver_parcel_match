@@ -22,5 +22,5 @@ log/
 .DS_Store
 target
 *.mine
-src/main/resources/Data.xls
-drivers.xls
+src/main/resources/*
+*.xls
