@@ -98,7 +98,12 @@ public class TimeTable {
         IntArrayList timeSlot = timeSlots.get(time);
         if(timeSlot != null){
             timeSlot.removeFirstOccurrence(vertexId);
+            if(timeSlot.isEmpty()) timeSlots.remove(time);
         }
+    }
+
+    public boolean isEmpty(){
+        return timeSlots.isEmpty();
     }
 
     public int findFirstTimeVertex(int departureTime) {

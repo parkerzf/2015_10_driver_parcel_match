@@ -8,13 +8,13 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 
 /**
- * The class is a excel utils
+ * The class is a excel reader
  *
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
  */
-public class ExcelHandler {
-    private static final Logger logger = LoggerFactory.getLogger(ExcelHandler.class);
+public class ExcelReader {
+    private static final Logger logger = LoggerFactory.getLogger(ExcelReader.class);
     private Workbook rwb;
 
     /**
@@ -22,7 +22,7 @@ public class ExcelHandler {
      *
      * @param filePath: the excel file path
      */
-    public ExcelHandler(String filePath) {
+    public ExcelReader(String filePath) {
         try {
             //Get file from resources folder
             ClassLoader classLoader = getClass().getClassLoader();

@@ -6,11 +6,9 @@ import nl.twente.bms.algo.struct.StationGraph;
 import nl.twente.bms.algo.struct.TimeExpandedGraph;
 import nl.twente.bms.model.elem.Driver;
 import nl.twente.bms.model.elem.Offer;
-import nl.twente.bms.utils.ExcelHandler;
+import nl.twente.bms.utils.ExcelReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
 
 /**
  * The class to record driver config
@@ -26,21 +24,21 @@ public class DriverConfig {
     private IntObjectMap<Offer> offerMap;
     private TimeExpandedGraph timeExpandedGraph;
 
-    public DriverConfig(int numDrivers, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
+    public DriverConfig(int numDrivers, ExcelReader excelReader,
                         StationGraph stationGraph) {
         nextOfferId = 0;
 
-        double speed = Double.parseDouble(excelHandler.xlsread("Input", 1, 4));
-        double detour = Double.parseDouble(excelHandler.xlsread("Input", 7, 16));
-        double delay = Double.parseDouble(excelHandler.xlsread("Input", 7, 17));
-        int hold = Integer.parseInt(excelHandler.xlsread("Input", 7, 18));
+        double speed = Double.parseDouble(excelReader.xlsread("Input", 1, 4));
+        double detour = Double.parseDouble(excelReader.xlsread("Input", 1, 16));
+        double delay = Double.parseDouble(excelReader.xlsread("Input", 1, 17));
+        int hold = Integer.parseInt(excelReader.xlsread("Input", 1, 18));
 
-        String[] idStrArray = excelHandler.xlsread("Input", 3, 1, numDrivers);
-        String[] startStationArray = excelHandler.xlsread("Input", 4, 1, numDrivers);
-        String[] endStationArray = excelHandler.xlsread("Input", 5, 1, numDrivers);
-        String[] earliestDepartureArray = excelHandler.xlsread("Input", 7, 1, numDrivers);
-        // String[] latestArrivalArray = excelHandler.xlsread("Input", 8, 1, numDrivers);
-        String[] capacityArray = excelHandler.xlsread("Input", 10, 1, numDrivers);
+        String[] idStrArray = excelReader.xlsread("Input", 3, 1, numDrivers);
+        String[] startStationArray = excelReader.xlsread("Input", 4, 1, numDrivers);
+        String[] endStationArray = excelReader.xlsread("Input", 5, 1, numDrivers);
+        String[] earliestDepartureArray = excelReader.xlsread("Input", 7, 1, numDrivers);
+        // String[] latestArrivalArray = excelReader.xlsread("Input", 8, 1, numDrivers);
+        String[] capacityArray = excelReader.xlsread("Input", 10, 1, numDrivers);
 
         timeExpandedGraph = new TimeExpandedGraph(stationGraph, this);
 
@@ -49,8 +47,8 @@ public class DriverConfig {
         offerMap = new IntObjectOpenHashMap<>(numDrivers);
         for (int i = 0; i < numDrivers; i++) {
             Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
-                    stationNameIndexMap.get(startStationArray[i]),
-                    stationNameIndexMap.get(endStationArray[i]),
+                    Integer.parseInt(startStationArray[i]),
+                    Integer.parseInt(endStationArray[i]),
                     detour,
                     delay,
                     Integer.parseInt(earliestDepartureArray[i]),
@@ -62,9 +60,9 @@ public class DriverConfig {
             Offer offer = driver.createInitOffer(currentId, stationGraph);
             offerMap.put(currentId, offer);
             timeExpandedGraph.addOffer(offer);
-            logger.debug(offer.toString());
+            logger.info(offer.toString());
         }
-        timeExpandedGraph.display();
+//        timeExpandedGraph.display();
     }
 
     public int getNextOfferId() {
@@ -81,5 +79,9 @@ public class DriverConfig {
 
     public void addOffer(Offer offer) {
         offerMap.put(offer.getId(), offer);
+    }
+
+    public IntObjectMap<Driver> getDriverMap() {
+        return driverMap;
     }
 }

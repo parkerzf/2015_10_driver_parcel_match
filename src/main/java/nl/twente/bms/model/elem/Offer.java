@@ -11,6 +11,8 @@ import java.util.List;
  * @author Feng Zhao (feng.zhao@feedzai.com)
  * @since 1.0
  */
+
+//TODO add parallel offer that start periodically
 public class Offer {
     private int id;
 

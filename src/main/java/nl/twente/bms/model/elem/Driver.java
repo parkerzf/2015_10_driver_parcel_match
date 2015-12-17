@@ -103,5 +103,8 @@ public class Driver {
                 id, source, target, epsilon, gamma, departureTime, holdDuration, speed, capacity);
     }
 
+    public int getShortestPathDistance(StationGraph stationGraph){
+        return stationGraph.getShortestDistance(source, target);
+    }
 
 }

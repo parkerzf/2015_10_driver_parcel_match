@@ -122,7 +122,7 @@ public class TimeExpandedGraph extends StationGraph {
      * @return the time vertex id
      */
     private int addTimeVertex(int time, int stationId, Offer offer) {
-        TimeTable timeTable = getTimeTable(stationId);
+        TimeTable timeTable = getOrCreateTimeTable(stationId);
         int vertexId = timeTable.getTimeVertex(time, offer, nodeOfferIdProperty);
         if (vertexId != -1) return vertexId;
 
@@ -137,32 +137,35 @@ public class TimeExpandedGraph extends StationGraph {
     }
 
     public void assignParcel(Parcel parcel){
-        TimeTable startTimeTable = getTimeTable(parcel.getStartStationId());
+        TimeTable startTimeTable = stationTimeTableMap.get(parcel.getStartStationId());
+        if(startTimeTable == null) return;
 
-        int startVertexId = -1;
-        do{
-            if(startVertexId != -1) this.removeVertex(startVertexId);
-            startVertexId = startTimeTable.findFirstTimeVertex(parcel.getEarliestDepartureTime());
-        }
-        while(startVertexId == -1 || isMarkedRemoved(startVertexId));
+        //find the first not marking removed start vertex
+        int startVertexId = getNextVertexId(startTimeTable, parcel.getEarliestDepartureTime());
 
-        TimeTable endTimeTable = getTimeTable(parcel.getEndStationId());
-
-//        int endVertexId = -1;
-//        do{
-//            if(endVertexId != -1) this.removeVertex(endVertexId);
-//            endVertexId = endTimeTable.findLastTimeVertex(parcel.getMaxDuration());
-//        }
-//        while(endVertexId == -1 || isMarkedRemoved(endVertexId));
-
-//        if(startVertexId != -1 && endVertexId != -1){
-        if(startVertexId != -1){
-            Path path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
+        Path path = null;
+        while(startVertexId != -1 && path == null){
+            path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
             if(path != null){
+                logger.info("Assign " + parcel + " to path " + path);
                 parcel.setPath(path);
                 updateOffers(path, parcel);
             }
+            else{
+                startVertexId = getNextVertexId(startTimeTable, nodeTimeProperty.getValueAsInt(startVertexId)+1);
+            }
         }
+    }
+
+    private int getNextVertexId(TimeTable timetable, int beginTime){
+        int startVertexId = timetable.findFirstTimeVertex(beginTime);
+
+        while(startVertexId != -1 && isMarkedRemoved(startVertexId)){
+            this.removeVertex(startVertexId);
+            startVertexId = timetable.findFirstTimeVertex(beginTime);
+        }
+
+        return startVertexId;
     }
 
     public Path getShortestPath(int source, int destinationStationId, int volume) {
@@ -210,12 +213,10 @@ public class TimeExpandedGraph extends StationGraph {
         Offer updatedOffer = new Offer(updatedOfferId, curOffer, parcel.getVolume());
         if(updatedOffer.isFeasible()){
             driverConfig.addOffer(updatedOffer);
-            System.out.println("Add updated offer: " + updatedOffer);
-            logger.debug("Add updated offer: " + updatedOffer);
+            logger.info("Add updated offer: " + updatedOffer);
         }
         else{
-            System.out.println("Updated offer is not feasible: " + updatedOffer);
-            logger.debug("Updated offer is not feasible: " + updatedOffer);
+            logger.warn("Updated offer is not feasible: " + updatedOffer);
         }
         return updatedOffer;
     }
@@ -232,12 +233,10 @@ public class TimeExpandedGraph extends StationGraph {
             if(newOffer.isFeasible()){
                 driverConfig.addOffer(newOffer);
                 addOffer(newOffer);
-                System.out.println("Add new offer: " + newOffer);
-                logger.debug("Add new offer: " + newOffer);
+                logger.info("Add new offer: " + newOffer);
             }
             else{
-                System.out.println("New offer is not feasible: " + newOffer);
-                logger.debug("New offer is not feasible: " + newOffer);
+                logger.warn("New offer is not feasible: " + newOffer);
             }
         }
     }
@@ -259,9 +258,9 @@ public class TimeExpandedGraph extends StationGraph {
     }
 
     public void removeVertex(int vertexId) {
-        System.out.println("Remove vertex: " + getLabel(vertexId));
+        logger.debug("Remove vertex: " + getLabel(vertexId));
         super.removeVertex(vertexId);
-        TimeTable timeTable = getTimeTable(nodeStationIdProperty.getValueAsInt(vertexId));
+        TimeTable timeTable = stationTimeTableMap.get(nodeStationIdProperty.getValueAsInt(vertexId));
         timeTable.removeTimeVertex(vertexId, nodeTimeProperty);
     }
 
@@ -269,7 +268,9 @@ public class TimeExpandedGraph extends StationGraph {
         return nodeStationIdProperty.getValueAsInt(vertexId);
     }
 
-    private TimeTable getTimeTable(int stationId){
+
+
+    private TimeTable getOrCreateTimeTable(int stationId){
         TimeTable timeTable = stationTimeTableMap.get(stationId);
         if (timeTable == null) {
             timeTable = new TimeTable();

@@ -1,6 +1,7 @@
 package nl.twente.bms.model.elem;
 
 import grph.path.Path;
+import nl.twente.bms.algo.struct.StationGraph;
 
 /**
  * The class to store the Parcel object
@@ -81,5 +82,9 @@ public class Parcel implements Comparable<Parcel> {
     public int compareTo(Parcel p) {
         // order parcel in desc order
         return Double.compare(p.shippingCompanyCost, shippingCompanyCost);
+    }
+
+    public int getShortestPathDistance(StationGraph stationGraph){
+        return stationGraph.getShortestDistance(startStationId, endStationId);
     }
 }

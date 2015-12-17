@@ -5,7 +5,7 @@ import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
-import nl.twente.bms.utils.ExcelHandler;
+import nl.twente.bms.utils.ExcelReader;
 
 
 import java.io.File;
@@ -56,18 +56,18 @@ public class RandomGen {
     }
 
     public static void main(String[] args) throws IOException, WriteException {
-        ExcelHandler excelHandler = new ExcelHandler("Locations.xls");
-        int numCities = Integer.parseInt(excelHandler.xlsread("Blad1", 1, 0));
-        int numDrivers = Integer.parseInt(excelHandler.xlsread("Blad1", 3, 0));
+        ExcelReader excelReader = new ExcelReader("Locations.xls");
+        int numCities = Integer.parseInt(excelReader.xlsread("Blad1", 1, 0));
+        int numDrivers = Integer.parseInt(excelReader.xlsread("Blad1", 3, 0));
 
         List<Weighting> weightings = new ArrayList<>();
         for(int i = 1; i < numCities + 1 ; i++){
-            String cityName = excelHandler.xlsread("Blad1", 0, i);
-            int weight = Integer.parseInt(excelHandler.xlsread("Blad1", 3, i));
+            String cityName = excelReader.xlsread("Blad1", 0, i);
+            int weight = Integer.parseInt(excelReader.xlsread("Blad1", 3, i));
             weightings.add(new Weighting(cityName, weight));
         }
 
-        excelHandler.close();
+        excelReader.close();
 
 
         WritableWorkbook wworkbook;

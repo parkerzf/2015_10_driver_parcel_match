@@ -59,6 +59,10 @@ public class DijkstraTimeExpandedAlgorithm
         while (!notYetVisitedVertices.isEmpty())
         {
             int minVertex = notYetVisitedVertices.dequeueMin().getValue();
+            //all the remaining vertices are not accessible from the source
+            if(r.distances[minVertex] == Integer.MAX_VALUE){
+                break;
+            }
             r.visitOrder.add(minVertex);
 
             if (listener != null)
@@ -92,6 +96,8 @@ public class DijkstraTimeExpandedAlgorithm
 
         if (listener != null)
             listener.searchCompleted();
+
+        if(destination == -1) return null;
 
         return new SearchResultWrappedPath(r, source, destination);
     }

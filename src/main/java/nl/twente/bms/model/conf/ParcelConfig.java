@@ -1,13 +1,14 @@
 package nl.twente.bms.model.conf;
 
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import nl.twente.bms.model.elem.Parcel;
-import nl.twente.bms.utils.ExcelHandler;
+import nl.twente.bms.utils.ExcelReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 
 /**
  * The class to record parcel config
@@ -18,26 +19,26 @@ import java.util.HashMap;
 public class ParcelConfig {
     private static final Logger logger = LoggerFactory.getLogger(ParcelConfig.class);
 
-    private HashMap<Integer, Parcel> parcelMap;
+    private IntObjectMap<Parcel> parcelMap;
     private ArrayList<Parcel> parcelSortedList;
 
-    public ParcelConfig(int numParcels, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap) {
+    public ParcelConfig(int numParcels, ExcelReader excelReader) {
 
-        String[] idStrArray = excelHandler.xlsread("Input", 12, 1, numParcels);
-        String[] startStationArray = excelHandler.xlsread("Input", 13, 1, numParcels);
-        String[] endStationArray = excelHandler.xlsread("Input", 14, 1, numParcels);
-        String[] costArray = excelHandler.xlsread("Input", 15, 1, numParcels);
-        String[] earliestDepartureArray = excelHandler.xlsread("Input", 16, 1, numParcels);
-        String[] latestArrivalArray = excelHandler.xlsread("Input", 17, 1, numParcels);
-        String[] volumeArray = excelHandler.xlsread("Input", 18, 1, numParcels);
+        String[] idStrArray = excelReader.xlsread("Input", 12, 1, numParcels);
+        String[] startStationArray = excelReader.xlsread("Input", 13, 1, numParcels);
+        String[] endStationArray = excelReader.xlsread("Input", 14, 1, numParcels);
+        String[] costArray = excelReader.xlsread("Input", 15, 1, numParcels);
+        String[] earliestDepartureArray = excelReader.xlsread("Input", 16, 1, numParcels);
+        String[] latestArrivalArray = excelReader.xlsread("Input", 17, 1, numParcels);
+        String[] volumeArray = excelReader.xlsread("Input", 18, 1, numParcels);
 
-        parcelMap = new HashMap<Integer, Parcel>(numParcels);
-        parcelSortedList = new ArrayList<Parcel>(numParcels);
+        parcelMap = new IntObjectOpenHashMap<>(numParcels);
+        parcelSortedList = new ArrayList<>(numParcels);
 
         for (int i = 0; i < numParcels; i++) {
             Parcel parcel = new Parcel(Integer.parseInt(idStrArray[i]),
-                    stationNameIndexMap.get(startStationArray[i]),
-                    stationNameIndexMap.get(endStationArray[i]),
+                    Integer.parseInt(startStationArray[i]),
+                    Integer.parseInt(endStationArray[i]),
                     Integer.parseInt(earliestDepartureArray[i]),
                     Integer.parseInt(latestArrivalArray[i]),
                     Double.parseDouble(costArray[i]),
@@ -48,11 +49,15 @@ public class ParcelConfig {
         }
         Collections.sort(parcelSortedList);
 
-        logger.debug("Parcel sort list size: {}.", parcelSortedList.size());
-        logger.debug("The most costly parcel: {}.", parcelSortedList.get(0));
+        logger.info("Parcel sort list size: {}", parcelSortedList.size());
+        logger.info("The most costly parcel: {}", parcelSortedList.get(0));
     }
 
     public ArrayList<Parcel> getParcelSortedList() {
         return parcelSortedList;
+    }
+
+    public IntObjectMap<Parcel> getParcelMap() {
+        return parcelMap;
     }
 }
