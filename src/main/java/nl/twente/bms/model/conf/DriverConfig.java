@@ -1,7 +1,6 @@
 package nl.twente.bms.model.conf;
 
 import com.carrotsearch.hppc.*;
-import jxl.write.*;
 import nl.twente.bms.algo.struct.WeightedGrph;
 import nl.twente.bms.algo.struct.WeightedSmartPath;
 import nl.twente.bms.model.elem.Driver;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 /**
  * The class to record Driver Config object
@@ -28,8 +26,7 @@ public class DriverConfig {
     private IntObjectMap<Driver> driverMap;
     private ArrayList<Driver> driverList;
 
-    public DriverConfig(int numStations, ExcelHandler excelHandler, HashMap<String, Integer> stationNameIndexMap,
-                        WeightedGrph stationGrph) {
+    public DriverConfig(int numStations, ExcelHandler excelHandler, WeightedGrph stationGrph) {
 
         maxDetour = Double.parseDouble(excelHandler.xlsread("Input", 1, 1));
         avgSpeed = Double.parseDouble(excelHandler.xlsread("Input", 1, 4));
@@ -49,10 +46,10 @@ public class DriverConfig {
         driverList = new ArrayList<Driver>(numStations);
         for(int i =0; i < numStations; i++){
             Driver driver = new Driver(Integer.parseInt(idStrArray[i]),
-                    stationNameIndexMap.get(startStationArray[i]),
-                    stationNameIndexMap.get(endStationArray[i]),
+                    Integer.parseInt(startStationArray[i]),
+                    Integer.parseInt(endStationArray[i]),
                     Integer.parseInt(earliestDepartureArray[i]),
-                    Integer.parseInt(latestArrivalArray[i]),
+                    ((int) Double.parseDouble(latestArrivalArray[i])),
                     Integer.parseInt(capacityArray[i]));
 
             setMaxDetourPaths(driver, stationGrph);

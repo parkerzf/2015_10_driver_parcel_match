@@ -7,7 +7,6 @@ import nl.twente.bms.utils.ExcelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 
 
 /**
@@ -32,28 +31,25 @@ public class StationConfig {
 
         WeightedGrph g = new WeightedGrph();
         Property vLabel = new StringProperty("Label");
-        String[] stationNames = excelHandler.xlsread("Distance", 0, 1, numStations);
-        for(int i = 0; i < numStations; i ++ ){
-            g.addVertex(i+1);
-            vLabel.setValue(i+1, stationNames[i]);
+        for (int i = 0; i < numStations; i++) {
+            g.addVertex(i + 1);
+            vLabel.setValue(i + 1, Integer.toString(i + 1));
         }
 
-        for(int col = 1; col < numStations + 1; col++ ){
-            for(int row = 1; row < numStations +1; row++){
+        for (int col = 0; col < numStations; col++) {
+            for (int row = 0; row < numStations; row++) {
                 int distance = Integer.parseInt(excelHandler.xlsread("Direct Distance", col, row));
-                g.setDirectDistance(col, row, distance);
-                logger.debug("{} <> {}: {}", col, row, distance);
+                g.setDirectDistance(col + 1, row + 1, distance);
             }
         }
 
-        for(int col = 1; col < numStations + 1; col++ ){
-            for(int row = col + 1; row < numStations +1; row++){
+        for (int col = 0; col < numStations; col++) {
+            for (int row = col; row < numStations; row++) {
                 int distance = Integer.parseInt(excelHandler.xlsread("Distance", col, row));
                 // distance != 0 means that two stations have an edge
-                if(distance != 0){
-                    int e = g.addUndirectedSimpleEdge(col, row);
+                if (distance != 0) {
+                    int e = g.addUndirectedSimpleEdge(col+1, row+1);
                     g.setEdgeWeight(e, distance);
-                    logger.debug("{} <> {}: {}", col, row, g.getEdgeWeight(e));
                 }
             }
         }
