@@ -81,7 +81,7 @@ public class Driver {
             for(int i = 1; i < path.getNumberOfVertices(); i++){
                 int u = path.getVertexAt(i - 1);
                 int v = path.getVertexAt(i);
-                sheet.addCell(new Number(v-1, u-1, 1));
+                sheet.addCell(new Number(v+1, u, 1));
             }
         }
     }

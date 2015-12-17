@@ -18,16 +18,17 @@ import java.util.ArrayList;
 public class App 
 {
     public static void main( String[] args ) throws IOException, WriteException {
-        String confFilePath = "Data.xls";
+        String confFilePath = "Data26.xls";
         MatchingModel model = new MatchingModel(confFilePath);
 
         ArrayList<Driver> driverList = model.getDriverConfig().getDriverList();
 
-        WritableWorkbook wworkbook = Workbook.createWorkbook(new File("drivers.xls"));
+        WritableWorkbook wworkbook = Workbook.createWorkbook(new File("drivers26.xls"));
 
         int sheetIndex = 0;
         for(Driver driver: driverList){
-            WritableSheet sheet = wworkbook.createSheet("driver "+ driver.getId(), sheetIndex++);
+            WritableSheet sheet = wworkbook.createSheet(Integer.toString(driver.getId()), sheetIndex++);
+            model.setHeader(sheet, driver.getId());
             driver.setSpreadSheetByMaxDetourPaths(sheet);
         }
         wworkbook.write();

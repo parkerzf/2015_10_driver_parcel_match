@@ -1,6 +1,9 @@
 package nl.twente.bms.model;
 
 
+import jxl.write.Number;
+import jxl.write.WritableSheet;
+import jxl.write.WriteException;
 import nl.twente.bms.model.conf.DriverConfig;
 import nl.twente.bms.model.conf.ParcelConfig;
 import nl.twente.bms.model.conf.StationConfig;
@@ -125,6 +128,15 @@ public class MatchingModel {
 
     public double getWeightExtraTime() {
         return weightExtraTime;
+    }
+
+    public void setHeader(WritableSheet sheet, int driverId) throws WriteException {
+        for(int i = 1;  i <= numStations; i++){
+            sheet.addCell(new Number(0, i, driverId));
+            sheet.addCell(new Number(1, i, i));
+            sheet.addCell(new Number(i+1, 0, i));
+        }
+
     }
 
 }
