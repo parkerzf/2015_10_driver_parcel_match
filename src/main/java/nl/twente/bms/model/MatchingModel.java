@@ -121,7 +121,7 @@ public class MatchingModel {
     public void solve(){
         TimeExpandedGraph tGraph = driverConfig.getTimeExpandedGraph();
         for(Parcel parcel: parcelConfig.getParcelSortedList()){
-            logger.info("Assign " + parcel);
+            logger.debug("Assign " + parcel);
             tGraph.assignParcel(parcel);
         }
     }

@@ -23,6 +23,9 @@ public class Offer {
     private int source;
     private int target;
 
+    private int sourceTimeVertex = -1;
+    private int targetTimeVertex = -1;
+
     private int departureTime;
     private int capacity;
 
@@ -54,7 +57,7 @@ public class Offer {
         this.id = id;
         this.extendableOffer = false;
         this.source = offer.source;
-        this.target = offer.target;
+        this.sourceTimeVertex = offer.sourceTimeVertex;
         this.departureTime = offer.departureTime;
         this.capacity = offer.capacity - volume;
         this.driver = offer.driver;
@@ -67,16 +70,18 @@ public class Offer {
         }
     }
 
-    public Offer(int id, Offer offer, int newSourceStationId, int timeAtNewSourceStationId) {
+    public Offer(int id, Offer offer, int newSourceTimeVertexId, int newSourceStationId, int timeAtNewSourceStationId) {
         this.id = id;
         this.extendableOffer = offer.extendableOffer;
         this.source = newSourceStationId;
+        this.sourceTimeVertex = newSourceTimeVertexId;
         this.target = offer.target;
+        this.targetTimeVertex = offer.targetTimeVertex;
         this.departureTime = timeAtNewSourceStationId;
         this.capacity = offer.capacity;
         this.driver = offer.driver;
         maxDuration = offer.getMaxDuration() - (this.departureTime - offer.departureTime);
-        maxDetour = (int) ((1 + getEpsilon()) * getDistance(maxDuration));
+        maxDetour = offer.getMaxDetour() - getDistance(this.departureTime - offer.departureTime);
         this.parcels = new ArrayList<>();
         if(isFeasible()){
             this.driver.addOffer(this);
@@ -84,7 +89,8 @@ public class Offer {
     }
 
     public boolean isFeasible(){
-        return capacity >0 && maxDuration > 0 && maxDetour > 0;
+        return  source != target &&
+                capacity >0 && maxDuration > 0 && maxDetour > 0;
     }
 
     public int getId() {
@@ -155,8 +161,25 @@ public class Offer {
     }
 
     public String toString() {
-        return String.format("Offer[%d] in Driver[%d]: %d->%d, Capacity: %d, " +
+        return String.format("Offer[%d] in Driver[%d]: %d(%d)->%d(%d), Capacity: %d, " +
                              "Depart: %d, maxDuration: %d, maxDetour: %d",
-                id, getDriverId(), source, target, capacity, departureTime, maxDuration, maxDetour);
+                id, getDriverId(), source, sourceTimeVertex, target, targetTimeVertex,
+                capacity, departureTime, maxDuration, maxDetour);
+    }
+
+    public void setTarget(int target) {
+        this.target = target;
+    }
+
+    public void setSourceTimeVertex(int sourceTimeVertex) {
+        this.sourceTimeVertex = sourceTimeVertex;
+    }
+
+    public void setTargetTimeVertex(int targetTimeVertex) {
+        this.targetTimeVertex = targetTimeVertex;
+    }
+
+    public int getSourceTimeVertex() {
+        return sourceTimeVertex;
     }
 }

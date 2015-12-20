@@ -12,6 +12,8 @@ public class App {
             confFilePath = args[0];
         }
 
+        ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
+
         MatchingModel model = new MatchingModel(confFilePath);
         model.solve();
     }
