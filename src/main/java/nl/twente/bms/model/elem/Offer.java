@@ -1,5 +1,6 @@
 package nl.twente.bms.model.elem;
 
+import nl.twente.bms.algo.MaxDetourPaths;
 import nl.twente.bms.algo.struct.StationGraph;
 
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.List;
 public class Offer {
     private int id;
 
-    private boolean extendableOffer;
+    private boolean isUpdatedOffer;
 
     private Driver driver;
 
@@ -27,6 +28,7 @@ public class Offer {
     private int targetTimeVertex = -1;
 
     private int departureTime;
+    private int earliestArrivalTime = Integer.MAX_VALUE; //this is the time to reach targetTimeVertex, which means the ealiestArrivalTime
     private int capacity;
 
     private int maxDuration;
@@ -36,7 +38,7 @@ public class Offer {
 
     public Offer(int id, int source, int target, int departureTime, int capacity, Driver driver, StationGraph stationGraph) {
         this.id = id;
-        this.extendableOffer = true;
+        this.isUpdatedOffer = false;
         this.source = source;
         this.target = target;
         this.departureTime = departureTime;
@@ -45,6 +47,7 @@ public class Offer {
 
         int distanceSourceTarget = stationGraph.getShortestDistance(source, target);
         maxDetour = (int) ((1 + getEpsilon()) * distanceSourceTarget);
+        //TODO change to read the max duration from the excel
         maxDuration = (int) ((1 + getGamma()) * getDuration(distanceSourceTarget));
 
         this.parcels = new ArrayList<>();
@@ -55,7 +58,7 @@ public class Offer {
 
     public Offer(int id, Offer offer, int volume){
         this.id = id;
-        this.extendableOffer = false;
+        this.isUpdatedOffer = true;
         this.source = offer.source;
         this.sourceTimeVertex = offer.sourceTimeVertex;
         this.departureTime = offer.departureTime;
@@ -66,13 +69,12 @@ public class Offer {
         this.parcels = new ArrayList<>();
         if(isFeasible()){
             this.driver.addOffer(this);
-
         }
     }
 
     public Offer(int id, Offer offer, int newSourceTimeVertexId, int newSourceStationId, int timeAtNewSourceStationId) {
         this.id = id;
-        this.extendableOffer = offer.extendableOffer;
+        this.isUpdatedOffer = offer.isUpdatedOffer;
         this.source = newSourceStationId;
         this.sourceTimeVertex = newSourceTimeVertexId;
         this.target = offer.target;
@@ -122,7 +124,7 @@ public class Offer {
     }
 
     public int getHoldDuration() {
-        return driver.getHoldDuration();
+        return driver.getHold();
     }
 
     public double getSpeed() {
@@ -157,7 +159,7 @@ public class Offer {
     }
 
     public boolean isExtendableOffer() {
-        return extendableOffer;
+        return !isUpdatedOffer;
     }
 
     public String toString() {
@@ -179,7 +181,21 @@ public class Offer {
         this.targetTimeVertex = targetTimeVertex;
     }
 
+    public void setEarliestArrivalTime(int earliestArrivalTime) {
+        this.earliestArrivalTime = earliestArrivalTime;
+    }
+
     public int getSourceTimeVertex() {
         return sourceTimeVertex;
+    }
+
+    public void updateTargetRelatedInfo(int stationId, int prevVertexId, int earliestArrivalTime) {
+        this.setTarget(stationId);
+        this.setTargetTimeVertex(prevVertexId);
+        this.setEarliestArrivalTime(earliestArrivalTime);
+    }
+
+    public int getEarliestArrivalTime() {
+        return earliestArrivalTime;
     }
 }

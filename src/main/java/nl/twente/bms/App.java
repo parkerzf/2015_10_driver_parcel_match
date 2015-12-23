@@ -1,11 +1,15 @@
 package nl.twente.bms;
 
 import nl.twente.bms.model.MatchingModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test application
  */
 public class App {
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) {
         String confFilePath = "Data.xls";
         if(args.length == 1){
@@ -16,5 +20,7 @@ public class App {
 
         MatchingModel model = new MatchingModel(confFilePath);
         model.solve();
+
+        logger.info("Model objective value: " + model.computeCost());
     }
 }

@@ -48,7 +48,7 @@ public class MatchingModel {
     /**
      * Weights for the object function
      */
-    private double weightTravelTime;
+    private double weightTravelDistanceInKilometer;
     private double weightNumParcelTransfer;
     private double weightShippingCost;
     private double weightWaitingTime;
@@ -72,13 +72,13 @@ public class MatchingModel {
         logger.info("numParcels: {}", numParcels);
 
         String[] weightSettings = excelReader.xlsread("Input", 1, 7, 11);
-        weightTravelTime = Double.parseDouble(weightSettings[0]);
+        weightTravelDistanceInKilometer = Double.parseDouble(weightSettings[0]);
         weightNumParcelTransfer = Double.parseDouble(weightSettings[1]);
         weightShippingCost = Double.parseDouble(weightSettings[2]);
         weightWaitingTime = Double.parseDouble(weightSettings[3]);
         weightExtraTime = Double.parseDouble(weightSettings[4]);
 
-        logger.info("weightTravelTime: {}", weightTravelTime);
+        logger.info("weightTravelDistanceInKilometer: {}", weightTravelDistanceInKilometer);
         logger.info("weightNumParcelTransfer: {}", weightNumParcelTransfer);
         logger.info("weightShippingCost: {}", weightShippingCost);
         logger.info("weightWaitingTime: {}", weightWaitingTime);
@@ -121,9 +121,22 @@ public class MatchingModel {
     public void solve(){
         TimeExpandedGraph tGraph = driverConfig.getTimeExpandedGraph();
         for(Parcel parcel: parcelConfig.getParcelSortedList()){
-            logger.debug("Assign " + parcel);
+            logger.debug("Process " + parcel);
             tGraph.assignParcel(parcel);
         }
+    }
+
+    public double computeCost(){
+        double totalCost = 0;
+        for(ObjectCursor<Driver> driverCursor: driverConfig.getDriverMap().values()){
+            totalCost += driverCursor.value.getCost(weightWaitingTime, weightExtraTime, stationConfig.getStationGraph());
+        }
+        for(ObjectCursor<Parcel> parcelCursor: parcelConfig.getParcelMap().values()){
+            totalCost += parcelCursor.value.getCost(weightTravelDistanceInKilometer,
+                    weightNumParcelTransfer, weightShippingCost,
+                    driverConfig.getTimeExpandedGraph(), stationConfig.getStationGraph());
+        }
+        return totalCost;
     }
 
     public int getId() {
@@ -154,8 +167,8 @@ public class MatchingModel {
         return parcelConfig;
     }
 
-    public double getWeightTravelTime() {
-        return weightTravelTime;
+    public double getWeightTravelDistanceInKilometer() {
+        return weightTravelDistanceInKilometer;
     }
 
     public double getWeightNumParcelTransfer() {

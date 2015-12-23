@@ -74,6 +74,7 @@ public class TimeExpandedGraph extends StationGraph {
         //add sourceTimeVertex and targetTimeVertex to offer
         offer.setSourceTimeVertex(sourceTimeVertex);
         offer.setTargetTimeVertex(targetTimeVertex);
+        offer.setEarliestArrivalTime(targetTime);
 
         // assign the special case that directly travel from driver.sourceTimeVertex to driver.targetTimeVertex
         int driverEdge = this.addDirectedSimpleEdge(sourceTimeVertex, targetTimeVertex);
@@ -152,11 +153,12 @@ public class TimeExpandedGraph extends StationGraph {
         Path path = null;
         while (startVertexId != -1 && path == null) {
             path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
-            if (path != null) {
+            if (path != null && path.getLength() != 0) {
                 logger.info("Assign " + parcel + " to path " + getPathString(path));
                 parcel.setPath(path);
                 // path.setColor(this, 6);
-                updateOffers(path, parcel);
+                int numOffers = updateOffers(path, parcel);
+                parcel.setNumOffers(numOffers);
             } else {
                 startVertexId = getNextVertexId(startTimeTable, nodeTimeProperty.getValueAsInt(startVertexId) + 1);
             }
@@ -186,8 +188,9 @@ public class TimeExpandedGraph extends StationGraph {
      * @param path   the assigned path
      * @param parcel
      */
-    private void updateOffers(Path path, Parcel parcel) {
+    private int updateOffers(Path path, Parcel parcel) {
         // update capacities for the offers in the assigned path
+        int numOffers = 0;
         int prevOfferId = -1;
         int prevVertexId = -1;
         Offer updatedOffer = null;
@@ -196,27 +199,34 @@ public class TimeExpandedGraph extends StationGraph {
             int currentOfferId = nodeOfferIdProperty.getValueAsInt(currentVertexId);
             //a new offer hop
             if (currentOfferId != prevOfferId) {
-                if (updatedOffer != null && updatedOffer.isFeasible()) {
-                    updatedOffer.setTarget(nodeStationIdProperty.getValueAsInt(prevVertexId));
-                    updatedOffer.setTargetTimeVertex(prevVertexId);
-                    logger.info("Add updated offer: " + updatedOffer);
+                numOffers++;
+                if(prevOfferId != -1){
+                    if (updatedOffer.isFeasible()) {
+                        updatedOffer.updateTargetRelatedInfo(
+                                nodeStationIdProperty.getValueAsInt(prevVertexId),
+                                prevVertexId, nodeTimeProperty.getValueAsInt(prevVertexId));
+                        logger.info("Add updated offer: " + updatedOffer);
+                        addNewOffer(prevOfferId, prevVertexId);
+                    }
                 }
-                addNewOffer(prevOfferId, prevVertexId);
                 updatedOffer = updateCurrentOffer(currentOfferId, parcel);
             }
             prevOfferId = currentOfferId;
             prevVertexId = currentVertexId;
             if (updatedOffer.isFeasible()) {
+                logger.debug("Set v" + currentVertexId + " to o" + updatedOffer.getId());
                 nodeOfferIdProperty.setValue(currentVertexId, updatedOffer.getId());
             }
         }
         //update the source of prev updated offer and add new offer for the last offer
-        if (updatedOffer!=null && updatedOffer.isFeasible()) {
-            updatedOffer.setTarget(nodeStationIdProperty.getValueAsInt(prevVertexId));
-            updatedOffer.setTargetTimeVertex(prevVertexId);
+        if (updatedOffer.isFeasible()) {
+            updatedOffer.updateTargetRelatedInfo(nodeStationIdProperty.getValueAsInt(prevVertexId),
+                    prevVertexId, nodeTimeProperty.getValueAsInt(prevVertexId));
             logger.info("Add updated offer: " + updatedOffer);
+            addNewOffer(prevOfferId, prevVertexId);
         }
-        addNewOffer(prevOfferId, prevVertexId);
+
+        return numOffers;
     }
 
     private Offer updateCurrentOffer(int currentOfferId, Parcel parcel) {
@@ -231,6 +241,7 @@ public class TimeExpandedGraph extends StationGraph {
         if (updatedOffer.isFeasible()) {
             driverConfig.addOffer(updatedOffer);
             // always update the sourceTimeVertex to the updated offer
+            logger.debug("Set source v" + updatedOffer.getSourceTimeVertex() +" to o"  + updatedOffer.getId());
             nodeOfferIdProperty.setValue(updatedOffer.getSourceTimeVertex(), updatedOffer.getId());
         } else {
             logger.warn("Updated offer is not feasible: " + updatedOffer);
@@ -241,7 +252,7 @@ public class TimeExpandedGraph extends StationGraph {
     // add a new offer starting from the end point of the prev offer
     private void addNewOffer(int prevOfferId, int startVertexId) {
         Offer prevOffer = driverConfig.getOfferById(prevOfferId);
-        if (prevOffer != null && prevOffer.isExtendableOffer()) {
+        if (prevOffer.isExtendableOffer()) {
             int nextOfferId = driverConfig.getNextOfferId();
             Offer newOffer = new Offer(nextOfferId, prevOffer, startVertexId,
                     nodeStationIdProperty.getValueAsInt(startVertexId),
@@ -254,6 +265,9 @@ public class TimeExpandedGraph extends StationGraph {
             } else {
                 logger.warn("New offer is not feasible: " + newOffer);
             }
+        }
+        else {
+            logger.warn("Updated offer is not extendable: " + prevOffer);
         }
     }
 

@@ -6,6 +6,8 @@ import grph.algo.search.SearchResult;
 import grph.path.SearchResultWrappedPath;
 import nl.twente.bms.algo.struct.FibonacciHeap;
 import nl.twente.bms.algo.struct.TimeExpandedGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import toools.NotYetImplementedException;
 import toools.set.IntSet;
 
@@ -22,6 +24,7 @@ import java.util.Map;
  */
 public class DijkstraTimeExpandedAlgorithm
 {
+    private static final Logger logger = LoggerFactory.getLogger(DijkstraTimeExpandedAlgorithm.class);
     private final TimeExpandedGraph tGraph;
 
     public DijkstraTimeExpandedAlgorithm(TimeExpandedGraph tGraph)
@@ -54,8 +57,6 @@ public class DijkstraTimeExpandedAlgorithm
         if (listener != null)
             listener.searchStarted();
 
-        int[][] neighbors = tGraph.getOutNeighborhoods();
-
         while (!notYetVisitedVertices.isEmpty())
         {
             int minVertex = notYetVisitedVertices.dequeueMin().getValue();
@@ -73,23 +74,24 @@ public class DijkstraTimeExpandedAlgorithm
                 break;
             }
 
-            for (int n : neighbors[minVertex])
+            for (IntCursor vCursor : tGraph.getOutNeighbors(minVertex))
             {
-                if(tGraph.isMarkedRemoved(n)){
-                    tGraph.removeVertex(n);
+                int v = vCursor.value;
+                if(tGraph.isMarkedRemoved(v)){
+                    tGraph.removeVertex(v);
                     continue;
                 }
-                if(!tGraph.hasCapacity(n, volume)){
+                if(!tGraph.hasCapacity(v, volume)){
                     continue;
                 }
-                int newDistance = r.distances[minVertex] + weight(minVertex, n);
+                int newDistance = r.distances[minVertex] + weight(minVertex, v);
 
-                if (newDistance < r.distances[n])
+                if (newDistance < r.distances[v])
                 {
-                    r.predecessors[n] = minVertex;
-                    r.distances[n] = newDistance;
-                    FibonacciHeap.Entry<Integer>  entry = entries.get(n);
-                    notYetVisitedVertices.decreaseKey(entry, r.distances[n]);
+                    r.predecessors[v] = minVertex;
+                    r.distances[v] = newDistance;
+                    FibonacciHeap.Entry<Integer>  entry = entries.get(v);
+                    notYetVisitedVertices.decreaseKey(entry, r.distances[v]);
                 }
             }
         }
