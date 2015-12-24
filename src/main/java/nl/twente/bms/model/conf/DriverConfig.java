@@ -28,8 +28,8 @@ public class DriverConfig {
                         StationGraph stationGraph) {
         nextOfferId = 0;
 
+        double detour = Double.parseDouble(excelReader.xlsread("Input", 1, 1));
         double speed = Double.parseDouble(excelReader.xlsread("Input", 1, 4));
-        double detour = Double.parseDouble(excelReader.xlsread("Input", 1, 16));
         double delay = Double.parseDouble(excelReader.xlsread("Input", 1, 17));
         int hold = Integer.parseInt(excelReader.xlsread("Input", 1, 18));
 
@@ -37,7 +37,7 @@ public class DriverConfig {
         String[] startStationArray = excelReader.xlsread("Input", 4, 1, numDrivers);
         String[] endStationArray = excelReader.xlsread("Input", 5, 1, numDrivers);
         String[] earliestDepartureArray = excelReader.xlsread("Input", 7, 1, numDrivers);
-        // String[] latestArrivalArray = excelReader.xlsread("Input", 8, 1, numDrivers);
+        String[] latestArrivalArray = excelReader.xlsread("Input", 8, 1, numDrivers);
         String[] capacityArray = excelReader.xlsread("Input", 10, 1, numDrivers);
 
         timeExpandedGraph = new TimeExpandedGraph(stationGraph, this);
@@ -52,6 +52,7 @@ public class DriverConfig {
                     detour,
                     delay,
                     Integer.parseInt(earliestDepartureArray[i]),
+                    Integer.parseInt(latestArrivalArray[i]),
                     hold,
                     speed,
                     Integer.parseInt(capacityArray[i]));

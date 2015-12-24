@@ -47,8 +47,7 @@ public class Offer {
 
         int distanceSourceTarget = stationGraph.getShortestDistance(source, target);
         maxDetour = (int) ((1 + getEpsilon()) * distanceSourceTarget);
-        //TODO change to read the max duration from the excel
-        maxDuration = (int) ((1 + getGamma()) * getDuration(distanceSourceTarget));
+        maxDuration = this.driver.getMaxDuration();
 
         this.parcels = new ArrayList<>();
         if(isFeasible()){

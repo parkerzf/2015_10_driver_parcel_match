@@ -26,7 +26,8 @@ public class Driver {
     private double epsilon; // detour threshold
     private double gamma; // delay threshold
 
-    private int departureTime;
+    private int earliestDepartureTime;
+    private int latestArrivalTime;
     private int hold; // longest holding parcel duration
 
     private double speed;
@@ -38,18 +39,23 @@ public class Driver {
 
 
     public Driver(int id, int source, int target, double epsilon, double gamma,
-                  int departureTime, int hold, double speed, int capacity) {
+                  int earliestDepartureTime, int latestArrivalTime, int hold, double speed, int capacity) {
         this.id = id;
         this.source = source;
         this.target = target;
         this.epsilon = epsilon;
         this.gamma = gamma;
-        this.departureTime = departureTime;
+        this.earliestDepartureTime = earliestDepartureTime;
+        this.latestArrivalTime = latestArrivalTime;
         this.hold = hold;
         this.speed = speed;
         this.capacity = capacity;
 
         this.offers = new ArrayList<>();
+    }
+
+    public int getMaxDuration(){
+        return latestArrivalTime - earliestDepartureTime;
     }
 
     public int getId() {
@@ -72,8 +78,8 @@ public class Driver {
         return gamma;
     }
 
-    public int getDepartureTime() {
-        return departureTime;
+    public int getEarliestDepartureTime() {
+        return earliestDepartureTime;
     }
 
     public int getHold() {
@@ -96,7 +102,7 @@ public class Driver {
     }
 
     public Offer createInitOffer(int offerId, StationGraph stationGraph) {
-        Offer offer = new Offer(offerId, getSource(), getTarget(), getDepartureTime(),
+        Offer offer = new Offer(offerId, getSource(), getTarget(), getEarliestDepartureTime(),
                 getCapacity(), this, stationGraph);
         return offer;
     }
@@ -107,7 +113,7 @@ public class Driver {
 
     public String toString() {
         return String.format("Driver[%d]: %d->%d, Detour: %.2f, Delay: %.2f, Depart: %d, Hold: %d, Speed: %.2f, Capacity: %d",
-                id, source, target, epsilon, gamma, departureTime, hold, speed, capacity);
+                id, source, target, epsilon, gamma, earliestDepartureTime, hold, speed, capacity);
     }
 
     public int getShortestPathDistance(StationGraph stationGraph){
