@@ -52,27 +52,21 @@ public class TimeTable {
         Integer nearestFutureTimeKey = timeSlots.ceilingKey(vertexTime + 1);
 
         int nearestPastVertex = -1;
-        int nearestPastDelay = offer.getHoldDuration() + 1;
+//        int nearestPastDelay = offer.getHoldDuration() + 1;
         if(nearestPastTimeKey != null){
-            nearestPastDelay = vertexTime - nearestPastTimeKey;
-            if(nearestPastDelay <= offer.getHoldDuration()){
                 IntArrayList nearestPastTimeSlot = timeSlots.get(nearestPastTimeKey);
                 nearestPastVertex = nearestPastTimeSlot.get(nearestPastTimeSlot.size() - 1);
                 int e = graph.addDirectedSimpleEdge(nearestPastVertex, vertexId);
-                graph.setEdgeWeight(e, nearestPastDelay);
-            }
+                graph.setEdgeWeight(e, vertexTime -  nearestPastTimeKey);
         }
 
         int nearestFutureVertex = -1;
-        int nearestFutureDelay = offer.getHoldDuration() + 1;
+//        int nearestFutureDelay = offer.getHoldDuration() + 1;
         if(nearestFutureTimeKey != null) {
-            nearestFutureDelay = nearestFutureTimeKey - vertexTime;
-            if (nearestFutureDelay <= offer.getHoldDuration()) {
                 IntArrayList nearestFutureTimeSlot = timeSlots.get(nearestFutureTimeKey);
                 nearestFutureVertex = nearestFutureTimeSlot.get(0);
                 int e = graph.addDirectedSimpleEdge(vertexId, nearestFutureVertex);
-                graph.setEdgeWeight(e, nearestFutureDelay);
-            }
+                graph.setEdgeWeight(e, nearestFutureTimeKey - vertexTime);
         }
 
         IntArrayList timeSlot = timeSlots.get(vertexTime);
@@ -85,7 +79,7 @@ public class TimeTable {
         timeOfferIdToTimeVertexIdTable.put(vertexTime, offer.getId(), vertexId);
 
         // remove the previous connection between nearestPastVertex and nearestFutureVertex
-        if (nearestPastDelay + nearestFutureDelay <= offer.getHoldDuration()) {
+        if (nearestPastVertex != -1 && nearestFutureVertex != -1) {
             for (IntCursor edgeCursor : graph.getEdgesConnecting(nearestPastVertex, nearestFutureVertex)) {
                 int edge = edgeCursor.value;
                 graph.removeEdge(edge);

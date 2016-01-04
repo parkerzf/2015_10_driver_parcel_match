@@ -127,8 +127,8 @@ public class StationGraph extends InMemoryGrph {
         if (distanceSourceDetourVertex + distanceDetourVertexTarget > offer.getMaxDetour()) return false;
 
         // delay feasibility
-        return offer.getDuration(distanceSourceDetourVertex) + offer.getDuration(distanceDetourVertexTarget)
-                + offer.getHoldDuration() <= offer.getMaxDuration();
+        return offer.getDuration(distanceSourceDetourVertex) + offer.getDuration(distanceDetourVertexTarget) <= offer.getMaxDuration();
+//                + offer.getHoldDuration() <= offer.getMaxDuration();
     }
 
     /**
@@ -151,8 +151,8 @@ public class StationGraph extends InMemoryGrph {
 
         // delay feasibility
         return offer.getDuration(distanceSourceDetourSource) + offer.getDuration(distanceDetourSourceDetourTarget)
-                + offer.getDuration(distanceDetourTargetTarget) + offer.getHoldDuration()
-                <= offer.getMaxDuration();
+//                + offer.getDuration(distanceDetourTargetTarget) + offer.getHoldDuration()
+                + offer.getDuration(distanceDetourTargetTarget) <= offer.getMaxDuration();
     }
 
     /**
