@@ -139,6 +139,7 @@ public class Driver {
         }
 
         int numHolds = stationIdList.size() - 2;
+        //TODO fix this cost
         double waitingTimeCost = weightWaitingTime * numHolds;
         int shortestDuration = getDuration(getShortestPathDistance(stationGraph));
 
