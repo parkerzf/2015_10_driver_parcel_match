@@ -50,7 +50,6 @@ public class DijkstraTimeExpandedAlgorithm
             entries.put(vertexId, notYetVisitedVertices.enqueue(vertexId, r.distances[vertexId]));
         }
 
-
         r.distances[source] = 0;
         notYetVisitedVertices.decreaseKey(entries.get(source), 0);
 

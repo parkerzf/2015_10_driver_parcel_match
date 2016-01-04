@@ -2,6 +2,8 @@ package nl.twente.bms.algo.struct;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import grph.properties.NumericalProperty;
 import nl.twente.bms.model.elem.Offer;
 
@@ -16,40 +18,36 @@ import java.util.TreeMap;
 public class TimeTable {
     // timeInMins to A list of time vertices map
     private TreeMap<Integer, IntArrayList> timeSlots;
+    private Table<Integer, Integer, Integer> timeOfferIdToTimeVertexIdTable;
+
     public TimeTable() {
         timeSlots = new TreeMap<>();
+        timeOfferIdToTimeVertexIdTable = HashBasedTable.create();
     }
 
     /**
      * Check the time vertex presence in the associated time slot
      *
      * @param time             the time at this station
-     * @param offer           the current driver's offer
+     * @param offerId           the current driver's offer Id
      * @param offerIdProperty the vertex offerIdProperty in time expanded graph
      * @return the time vertex if exist, otherwise -1
      */
-    public int getTimeVertex(int time, Offer offer, NumericalProperty offerIdProperty) {
-        IntArrayList timeSlot = timeSlots.get(time);
-        if (timeSlot == null) return -1;
-        // We just need to compare to the previous time vertex in this time slot,
-        // because we don't add a new time vertex if there is one from the same offer, in the same time slot.
-        int lastVertexId = timeSlot.get(timeSlot.size() - 1);
-        if (offerIdProperty.getValueAsInt(lastVertexId) == offer.getId()) {
-            return lastVertexId;
-        }
-        return -1;
+    public int getTimeVertex(int time, int offerId, NumericalProperty offerIdProperty) {
+        Integer tVertexId = timeOfferIdToTimeVertexIdTable.get(time, offerId);
+        return tVertexId == null? -1 : tVertexId;
     }
 
     /**
-     * Add time vertex to the time table of the station
+     * Add time vertexId to the time table of the station
      *
      * @param graph        the time expanded graph
-     * @param vertex       the time vertex id in the time expanded graph
-     * @param timeProperty the vertex timeProperty
-     * @param offer       the driver's associated with the vertex
+     * @param vertexId       the time vertexId id in the time expanded graph
+     * @param timeProperty the vertexId timeProperty
+     * @param offer       the driver's associated with the vertexId
      */
-    public void addTimeVertex(TimeExpandedGraph graph, int vertex, NumericalProperty timeProperty, Offer offer) {
-        int vertexTime = timeProperty.getValueAsInt(vertex);
+    public void addTimeVertex(TimeExpandedGraph graph, int vertexId, NumericalProperty timeProperty, Offer offer) {
+        int vertexTime = timeProperty.getValueAsInt(vertexId);
         Integer nearestPastTimeKey = timeSlots.floorKey(vertexTime);
         Integer nearestFutureTimeKey = timeSlots.ceilingKey(vertexTime + 1);
 
@@ -60,7 +58,7 @@ public class TimeTable {
             if(nearestPastDelay <= offer.getHoldDuration()){
                 IntArrayList nearestPastTimeSlot = timeSlots.get(nearestPastTimeKey);
                 nearestPastVertex = nearestPastTimeSlot.get(nearestPastTimeSlot.size() - 1);
-                int e = graph.addDirectedSimpleEdge(nearestPastVertex, vertex);
+                int e = graph.addDirectedSimpleEdge(nearestPastVertex, vertexId);
                 graph.setEdgeWeight(e, nearestPastDelay);
             }
         }
@@ -72,7 +70,7 @@ public class TimeTable {
             if (nearestFutureDelay <= offer.getHoldDuration()) {
                 IntArrayList nearestFutureTimeSlot = timeSlots.get(nearestFutureTimeKey);
                 nearestFutureVertex = nearestFutureTimeSlot.get(0);
-                int e = graph.addDirectedSimpleEdge(vertex, nearestFutureVertex);
+                int e = graph.addDirectedSimpleEdge(vertexId, nearestFutureVertex);
                 graph.setEdgeWeight(e, nearestFutureDelay);
             }
         }
@@ -82,7 +80,9 @@ public class TimeTable {
             timeSlot = new IntArrayList();
             timeSlots.put(vertexTime, timeSlot);
         }
-        timeSlot.add(vertex);
+        timeSlot.add(vertexId);
+
+        timeOfferIdToTimeVertexIdTable.put(vertexTime, offer.getId(), vertexId);
 
         // remove the previous connection between nearestPastVertex and nearestFutureVertex
         if (nearestPastDelay + nearestFutureDelay <= offer.getHoldDuration()) {
@@ -93,13 +93,19 @@ public class TimeTable {
         }
     }
 
-    public void removeTimeVertex(int vertexId, NumericalProperty nodeTimeProperty) {
-        int time = nodeTimeProperty.getValueAsInt(vertexId);
+    public void removeTimeVertex(int vertexId, int time, int offerId) {
         IntArrayList timeSlot = timeSlots.get(time);
         if(timeSlot != null){
             timeSlot.removeFirstOccurrence(vertexId);
             if(timeSlot.isEmpty()) timeSlots.remove(time);
         }
+
+        timeOfferIdToTimeVertexIdTable.remove(time, offerId);
+    }
+
+    public void updateTimeVertexOfferId(int vertexId, int time, int prevOfferId, int offerId) {
+        timeOfferIdToTimeVertexIdTable.remove(time, prevOfferId);
+        timeOfferIdToTimeVertexIdTable.put(time, offerId, vertexId);
     }
 
     public boolean isEmpty(){
@@ -113,10 +119,24 @@ public class TimeTable {
         return nearestFutureTimeSlot.get(0);
     }
 
+
     public int findLastTimeVertex(int arrivalTime) {
         Integer nearestPastTimeKey = timeSlots.floorKey(arrivalTime);
         if(nearestPastTimeKey == null ) return -1;
         IntArrayList nearestPastTimeSlot = timeSlots.get(nearestPastTimeKey);
         return nearestPastTimeSlot.get(nearestPastTimeSlot.size() - 1);
+    }
+
+    public int findNextTimeVertex(int departureTime, int startVertexId) {
+        Integer nearestFutureTimeKey = timeSlots.ceilingKey(departureTime);
+        if(nearestFutureTimeKey == null ) return -1;
+        IntArrayList nearestFutureTimeSlot = timeSlots.get(nearestFutureTimeKey);
+        int index = nearestFutureTimeSlot.indexOf(startVertexId);
+        if(index == nearestFutureTimeSlot.size() -1){
+            return findFirstTimeVertex(departureTime + 1);
+        }
+        else{
+            return index == -1? -1 : nearestFutureTimeSlot.get(index+1);
+        }
     }
 }

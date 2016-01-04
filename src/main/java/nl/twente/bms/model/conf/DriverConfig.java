@@ -63,7 +63,7 @@ public class DriverConfig {
             timeExpandedGraph.addOffer(offer);
             logger.info(offer.toString());
         }
-        // timeExpandedGraph.display();
+//         timeExpandedGraph.display();
     }
 
     public int getNextOfferId() {

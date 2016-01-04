@@ -55,12 +55,15 @@ public class Offer {
         }
     }
 
-    public Offer(int id, Offer offer, int volume){
+    public Offer(int id, Offer offer, int volume, int newTargetTimeVertexId, int newTargetStationId, int timeAtNewTargetStationId){
         this.id = id;
         this.isUpdatedOffer = true;
         this.source = offer.source;
         this.sourceTimeVertex = offer.sourceTimeVertex;
         this.departureTime = offer.departureTime;
+        this.target = newTargetStationId;
+        this.targetTimeVertex = newTargetTimeVertexId;
+        this.earliestArrivalTime = timeAtNewTargetStationId;
         this.capacity = offer.capacity - volume;
         this.driver = offer.driver;
         maxDetour = offer.getMaxDetour();
@@ -76,9 +79,10 @@ public class Offer {
         this.isUpdatedOffer = offer.isUpdatedOffer;
         this.source = newSourceStationId;
         this.sourceTimeVertex = newSourceTimeVertexId;
+        this.departureTime = timeAtNewSourceStationId;
         this.target = offer.target;
         this.targetTimeVertex = offer.targetTimeVertex;
-        this.departureTime = timeAtNewSourceStationId;
+        this.earliestArrivalTime = offer.earliestArrivalTime;
         this.capacity = offer.capacity;
         this.driver = offer.driver;
         maxDuration = offer.getMaxDuration() - (this.departureTime - offer.departureTime);
@@ -91,7 +95,7 @@ public class Offer {
 
     public boolean isFeasible(){
         return  source != target &&
-                capacity >0 && maxDuration > 0 && maxDetour > 0;
+                capacity > 0 && maxDuration > 0 && maxDetour > 0;
     }
 
     public int getId() {
@@ -157,8 +161,8 @@ public class Offer {
         parcels.add(parcel);
     }
 
-    public boolean isExtendableOffer() {
-        return !isUpdatedOffer;
+    public boolean isUpdatedOffer() {
+        return isUpdatedOffer;
     }
 
     public String toString() {
@@ -188,13 +192,11 @@ public class Offer {
         return sourceTimeVertex;
     }
 
-    public void updateTargetRelatedInfo(int stationId, int prevVertexId, int earliestArrivalTime) {
-        this.setTarget(stationId);
-        this.setTargetTimeVertex(prevVertexId);
-        this.setEarliestArrivalTime(earliestArrivalTime);
-    }
-
     public int getEarliestArrivalTime() {
         return earliestArrivalTime;
+    }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
     }
 }
