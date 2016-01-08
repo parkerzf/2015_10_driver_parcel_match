@@ -149,9 +149,7 @@ public class TimeExpandedGraph extends StationGraph {
     }
 
     public void assignParcel(Parcel parcel) {
-        if(parcel.getId() == 18){
-            System.out.println("debug");
-        }
+
         TimeTable startTimeTable = stationTimeTableMap.get(parcel.getStartStationId());
         if (startTimeTable == null) return;
 
@@ -264,15 +262,15 @@ public class TimeExpandedGraph extends StationGraph {
         Path pathToUpdate = stationGraph.getShortestPath(s, t);
         updateVertexOfferId(timeVertexId, offer.getId());
 
-        logger.info("Path to update: " + pathToUpdate);
-        logger.info("Set v" + timeVertexId + " to o" + offer.getId() + "@" + time);
+        logger.debug("Path to update: " + pathToUpdate);
+        logger.debug("Set v" + timeVertexId + " to o" + offer.getId() + "@" + time);
 
         for (int i = 1; i < pathToUpdate.getNumberOfVertices(); i++) {
             int preV = pathToUpdate.getVertexAt(i-1);
             int v = pathToUpdate.getVertexAt(i);
             time += offer.getDuration(stationGraph.getDirectDistance(preV, v));
             int timeV = getTimeVertex(time, v, prevOfferId);
-            logger.info("Set v" + timeV + " to o" + offer.getId()+ "@" + time);
+            logger.debug("Set v" + timeV + " to o" + offer.getId()+ "@" + time);
             if(timeV != -1){
                 updateVertexOfferId(timeV, offer.getId());
             }

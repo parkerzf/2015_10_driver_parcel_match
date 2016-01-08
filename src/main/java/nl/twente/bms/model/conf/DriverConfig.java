@@ -33,6 +33,10 @@ public class DriverConfig {
         double delay = Double.parseDouble(excelReader.xlsread("Input", 1, 17));
         int hold = Integer.parseInt(excelReader.xlsread("Input", 1, 18));
 
+        logger.info("detour: {}", detour);
+        logger.info("speed: {} km/h", speed);
+        logger.info("hold: {} mins", hold);
+
         String[] idStrArray = excelReader.xlsread("Input", 3, 1, numDrivers);
         String[] startStationArray = excelReader.xlsread("Input", 4, 1, numDrivers);
         String[] endStationArray = excelReader.xlsread("Input", 5, 1, numDrivers);

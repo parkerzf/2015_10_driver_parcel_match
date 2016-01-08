@@ -55,15 +55,29 @@ public class MatchingModel {
     private double weightExtraTime;
 
     public MatchingModel(String confFilePath) {
-        load(confFilePath);
+        load(confFilePath, -1, -1);
     }
 
-    private void load(String confFilePath) {
+    public MatchingModel(String confFilePath, int numDriversInput, int numParcelsInput) {
+        load(confFilePath, numDriversInput, numParcelsInput);
+    }
+
+    private void load(String confFilePath, int numDriversInput, int numParcelsInput) {
         ExcelReader excelReader = new ExcelReader(confFilePath);
         id = Integer.parseInt(excelReader.xlsread("Input", 1, 15));
         numStations = Integer.parseInt(excelReader.xlsread("Input", 1, 2));
-        numDrivers = Integer.parseInt(excelReader.xlsread("Input", 1, 0));
-        numParcels = Integer.parseInt(excelReader.xlsread("Input", 1, 3));
+        if(numDriversInput == -1){
+            numDrivers = Integer.parseInt(excelReader.xlsread("Input", 1, 0));
+        }
+        else{
+            numDrivers = numDriversInput;
+        }
+        if(numParcelsInput == -1){
+            numParcels = Integer.parseInt(excelReader.xlsread("Input", 1, 3));
+        }
+        else{
+            numParcels = numParcelsInput;
+        }
 
 
         logger.info("id: {}", id);
