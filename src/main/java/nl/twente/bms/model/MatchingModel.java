@@ -1,6 +1,9 @@
 package nl.twente.bms.model;
 
 
+import com.carrotsearch.hppc.IntOpenHashSet;
+import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
@@ -19,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * The class to store the configuration/status of the matching model read from the excel
@@ -37,6 +41,7 @@ public class MatchingModel {
     private int numStations;
     private int numDrivers;
     private int numParcels;
+    private double detour;
 
     /**
      * Complex configurations
@@ -55,14 +60,19 @@ public class MatchingModel {
     private double weightExtraTime;
 
     public MatchingModel(String confFilePath) {
-        load(confFilePath, -1, -1);
+        this(confFilePath, -1, -1);
     }
 
     public MatchingModel(String confFilePath, int numDriversInput, int numParcelsInput) {
-        load(confFilePath, numDriversInput, numParcelsInput);
+        this(confFilePath, numDriversInput, numParcelsInput, -1);
     }
 
-    private void load(String confFilePath, int numDriversInput, int numParcelsInput) {
+    public MatchingModel(String confFilePath, int numDriversInput, int numParcelsInput, double detourInput) {
+        this(confFilePath, numDriversInput, numParcelsInput, detourInput, false);
+    }
+
+    public MatchingModel(String confFilePath, int numDriversInput,
+                         int numParcelsInput, double detourInput, boolean isRandom) {
         ExcelReader excelReader = new ExcelReader(confFilePath);
         id = Integer.parseInt(excelReader.xlsread("Input", 1, 15));
         numStations = Integer.parseInt(excelReader.xlsread("Input", 1, 2));
@@ -72,6 +82,7 @@ public class MatchingModel {
         else{
             numDrivers = numDriversInput;
         }
+
         if(numParcelsInput == -1){
             numParcels = Integer.parseInt(excelReader.xlsread("Input", 1, 3));
         }
@@ -79,11 +90,17 @@ public class MatchingModel {
             numParcels = numParcelsInput;
         }
 
-
+        if(detourInput == -1){
+            detour = Double.parseDouble(excelReader.xlsread("Input", 1, 1));
+        }
+        else {
+            detour = detourInput;
+        }
         logger.info("id: {}", id);
         logger.info("numStations: {}", numStations);
         logger.info("numDrivers: {}", numDrivers);
         logger.info("numParcels: {}", numParcels);
+        logger.info("detour: {}", detour);
 
         String[] weightSettings = excelReader.xlsread("Input", 1, 7, 11);
         weightTravelDistanceInKilometer = Double.parseDouble(weightSettings[0]);
@@ -99,11 +116,17 @@ public class MatchingModel {
         logger.info("weightExtraTime: {}", weightExtraTime);
 
         stationConfig = new StationConfig(numStations, excelReader);
-        driverConfig = new DriverConfig(numDrivers, excelReader, stationConfig.getStationGraph());
-        parcelConfig = new ParcelConfig(numParcels, excelReader);
+        driverConfig = new DriverConfig(numDrivers, detour, excelReader, stationConfig.getStationGraph(), isRandom);
+        parcelConfig = new ParcelConfig(numParcels, excelReader, isRandom);
 
         excelReader.close();
     }
+
+    public void shuffle(){
+        IntSet assignedDriverIdSet = parcelConfig.getAssignedDriverIdSetAndReset();
+        driverConfig.shuffleAndRebuildTimeExpandedGraph(stationConfig.getStationGraph(), assignedDriverIdSet);
+    }
+
 
     public void outputShortestDistance(String filePath) throws IOException, WriteException, BiffException {
         ClassLoader classLoader = getClass().getClassLoader();
@@ -111,11 +134,11 @@ public class MatchingModel {
         Workbook wb = Workbook.getWorkbook(is);
         WritableWorkbook wwb = Workbook.createWorkbook(new File(filePath), wb);
         WritableSheet wSheet = wwb.getSheet("Input");
-        for(ObjectCursor<Driver> driverCursor : driverConfig.getDriverMap().values()){
+        for(ObjectCursor<Driver> driverCursor : driverConfig.getDriverList()){
             Driver driver = driverCursor.value;
 
             wSheet.addCell(new Number(6, driver.getId(),
-                    driver.getShortestPathDistance(stationConfig.getStationGraph())));
+                    driver.getShortestPathDistance()));
         }
 
         for(ObjectCursor<Parcel> parcelCursor : parcelConfig.getParcelMap().values()){
@@ -142,7 +165,7 @@ public class MatchingModel {
 
     public double computeCost(){
         double totalCost = 0;
-        for(ObjectCursor<Driver> driverCursor: driverConfig.getDriverMap().values()){
+        for(ObjectCursor<Driver> driverCursor: driverConfig.getDriverList()){
             totalCost += driverCursor.value.getCost(weightWaitingTime, weightExtraTime, stationConfig.getStationGraph());
         }
         for(ObjectCursor<Parcel> parcelCursor: parcelConfig.getParcelMap().values()){
@@ -201,4 +224,26 @@ public class MatchingModel {
         return weightExtraTime;
     }
 
+
+    public void display(boolean isFirst) {
+        if(isFirst) {
+            System.out.println("Drivers: " + Arrays.toString(driverConfig.getDriverIndices()));
+            System.out.println("Drivers: ");
+            for (ObjectCursor<Driver> driver : driverConfig.getDriverList()) {
+                System.out.println(driver.value.getExecelOutoput());
+            }
+            System.out.println("Parcels: " + Arrays.toString(parcelConfig.getParcelIndices()));
+            System.out.println("Parcels: ");
+            for (IntObjectCursor<Parcel> parcel : parcelConfig.getParcelMap()) {
+                System.out.println(parcel.value.getExecelOutoput());
+            }
+        }
+
+        double objectValue = computeCost();
+        int totalShippingCost = getParcelConfig().getTotalShippingCost();
+
+        System.out.println("Objective value: " + objectValue);
+        System.out.println("Worst case value: " + totalShippingCost);
+        System.out.println(String.format("Saving: %.2f%%", (totalShippingCost - objectValue)*100/totalShippingCost));
+    }
 }

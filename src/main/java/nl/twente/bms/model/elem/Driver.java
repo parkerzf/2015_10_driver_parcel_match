@@ -6,10 +6,7 @@ import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.IntSet;
 import nl.twente.bms.algo.struct.StationGraph;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * The class to store the Drive object
@@ -27,19 +24,26 @@ public class Driver {
     private double gamma; // delay threshold
 
     private int earliestDepartureTime;
+    private int latestDepartureTime;
     private int latestArrivalTime;
+    private int departureTime;
     private int hold; // longest holding parcel duration
 
-    private double speed;
+    private int shortestPathDistance;
 
+
+    private double speed;
     private int capacity;
 
     private List<Offer> offers;
 
+    private Random rand = new Random(System.currentTimeMillis());
+
 
 
     public Driver(int id, int source, int target, double epsilon, double gamma,
-                  int earliestDepartureTime, int latestArrivalTime, int hold, double speed, int capacity) {
+                  int earliestDepartureTime, int latestArrivalTime, int shortestPathDistance,
+                  int hold, double speed, int capacity) {
         this.id = id;
         this.source = source;
         this.target = target;
@@ -47,15 +51,23 @@ public class Driver {
         this.gamma = gamma;
         this.earliestDepartureTime = earliestDepartureTime;
         this.latestArrivalTime = latestArrivalTime;
+        this.shortestPathDistance = shortestPathDistance;
+        this.departureTime = earliestDepartureTime;
         this.hold = hold;
         this.speed = speed;
         this.capacity = capacity;
 
+        this.latestDepartureTime = latestArrivalTime - getDuration(shortestPathDistance);
+
         this.offers = new ArrayList<>();
     }
 
+    public void shuffle() {
+        departureTime = earliestDepartureTime + (int)(rand.nextFloat()* (latestDepartureTime - earliestDepartureTime));
+    }
+
     public int getMaxDuration(){
-        return latestArrivalTime - earliestDepartureTime;
+        return latestArrivalTime - departureTime;
     }
 
     public int getId() {
@@ -102,8 +114,8 @@ public class Driver {
     }
 
     public Offer createInitOffer(int offerId, StationGraph stationGraph) {
-        Offer offer = new Offer(offerId, getSource(), getTarget(), getEarliestDepartureTime(),
-                getCapacity(), this, stationGraph);
+        Offer offer = new Offer(offerId, source, target, departureTime,
+                capacity, this, stationGraph);
         return offer;
     }
 
@@ -113,22 +125,22 @@ public class Driver {
 
     public String toString() {
         return String.format("Driver[%d]: %d->%d, Detour: %.2f, Delay: %.2f, Depart: %d, Hold: %d, Speed: %.2f, Capacity: %d",
-                id, source, target, epsilon, gamma, earliestDepartureTime, hold, speed, capacity);
+                id, source, target, epsilon, gamma, departureTime, hold, speed, capacity);
     }
 
-    public int getShortestPathDistance(StationGraph stationGraph){
-        return stationGraph.getShortestDistance(source, target);
+    public String getExecelOutoput(){
+        return String.format("%d\t%d\t%d\t%d\t%d\t%d\t \t%d",
+                id, source, target, shortestPathDistance, departureTime, latestArrivalTime, capacity);
+    }
+
+    public int getShortestPathDistance(){
+        return shortestPathDistance;
     }
 
     public double getCost(double weightWaitingTime, double weightExtraTime, StationGraph stationGraph){
         IntSet stationIdSet = new IntOpenHashSet();
         IntArrayList stationIdList = new IntArrayList();
-        Collections.sort(offers, new Comparator<Offer>() {
-            @Override
-            public int compare(Offer o1, Offer o2) {
-                return o1.getEarliestArrivalTime() - o2.getEarliestArrivalTime();
-            }
-        });
+        Collections.sort(offers, (o1, o2) -> o1.getEarliestArrivalTime() - o2.getEarliestArrivalTime());
 
         stationIdList.add(source);
         for(Offer offer: offers){
@@ -140,7 +152,7 @@ public class Driver {
 
         int numHolds = stationIdList.size() - 2;
         double waitingTimeCost = weightWaitingTime * numHolds;
-        int shortestDuration = getDuration(getShortestPathDistance(stationGraph));
+        int shortestDuration = latestArrivalTime - latestDepartureTime;
 
         int realDistance = 0;
         for(int i = 0; i< stationIdList.size() - 1; i++){
@@ -150,5 +162,13 @@ public class Driver {
         double extraTimeCost = weightExtraTime * (realDuration - shortestDuration);
 
         return waitingTimeCost + extraTimeCost;
+    }
+
+    public int getDepartureTime() {
+        return departureTime;
+    }
+
+    public void reset(){
+        offers.clear();
     }
 }

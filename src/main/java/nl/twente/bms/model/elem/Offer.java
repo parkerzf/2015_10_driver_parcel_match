@@ -94,7 +94,7 @@ public class Offer {
     }
 
     public boolean isFeasible(){
-        return  source != target &&
+        return  source != target && departureTime >= 0 &&
                 capacity > 0 && maxDuration > 0 && maxDetour > 0;
     }
 

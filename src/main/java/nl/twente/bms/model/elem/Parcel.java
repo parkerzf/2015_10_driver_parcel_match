@@ -3,6 +3,7 @@ package nl.twente.bms.model.elem;
 import grph.path.Path;
 import nl.twente.bms.algo.struct.StationGraph;
 import nl.twente.bms.algo.struct.TimeExpandedGraph;
+import toools.set.IntSet;
 
 /**
  * The class to store the Parcel object
@@ -23,6 +24,7 @@ public class Parcel implements Comparable<Parcel> {
 
     private Path path;
     private int numOffers;
+    private IntSet driverIdSet;
 
     public Parcel(int id, int startStationId, int endStationId,
                   int earliestDepartureTime, int latestArrivalTime, double shippingCompanyCost, int volume) {
@@ -34,6 +36,7 @@ public class Parcel implements Comparable<Parcel> {
         this.shippingCompanyCost = shippingCompanyCost;
         this.volume = volume;
         this.path = null;
+        this.numOffers = 0;
     }
 
     public int getId() {
@@ -81,6 +84,11 @@ public class Parcel implements Comparable<Parcel> {
                 earliestDepartureTime, latestArrivalTime, shippingCompanyCost, volume);
     }
 
+    public String getExecelOutoput(){
+        return String.format("%d\t%d\t%d\t%.1f\t%d\t%d\t%d",
+                id, startStationId, endStationId, shippingCompanyCost, earliestDepartureTime, latestArrivalTime, volume).replace('.', ',');
+    }
+
     public int compareTo(Parcel p) {
         // order parcel in desc order
         return Double.compare(p.shippingCompanyCost, shippingCompanyCost);
@@ -112,5 +120,19 @@ public class Parcel implements Comparable<Parcel> {
 
     public void setNumOffers(int numOffers) {
         this.numOffers = numOffers;
+    }
+
+    public void reset(){
+        path = null;
+        numOffers = 0;
+        driverIdSet = null;
+    }
+
+    public void setDriverIdSet(IntSet driverIdSet) {
+        this.driverIdSet = driverIdSet;
+    }
+
+    public IntSet getDriverIdSet() {
+        return driverIdSet;
     }
 }

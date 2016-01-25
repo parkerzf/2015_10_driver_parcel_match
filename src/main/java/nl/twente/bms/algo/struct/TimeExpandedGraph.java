@@ -1,9 +1,8 @@
 package nl.twente.bms.algo.struct;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import grph.path.ArrayPath;
 import grph.path.Path;
 import grph.properties.NumericalProperty;
 import grph.properties.StringProperty;
@@ -38,6 +37,8 @@ public class TimeExpandedGraph extends StationGraph {
 
     private IntSet markRemovedOfferIds;
 
+    private IntIntMap assignmentMap;
+
     public TimeExpandedGraph(StationGraph stationGraph, DriverConfig driverConfig) {
         nodeTimeProperty = new NumericalProperty("time", 11, 1441);
         nodeStationIdProperty = new NumericalProperty("station", 16, 65535);
@@ -46,6 +47,8 @@ public class TimeExpandedGraph extends StationGraph {
 
         markRemovedOfferIds = new IntHashSet();
         stationTimeTableMap = new IntObjectOpenHashMap<>(stationGraph.getNumberOfVertices());
+
+        assignmentMap = new IntIntOpenHashMap();
 
         this.stationGraph = stationGraph;
         this.driverConfig = driverConfig;
@@ -160,8 +163,10 @@ public class TimeExpandedGraph extends StationGraph {
         while (startVertexId != -1 && path == null) {
             path = getShortestPath(startVertexId, parcel.getEndStationId(), parcel.getVolume());
             if (path != null && path.getLength() != 0) {
+                path = getCompactPath(path);
                 logger.info("Assign " + parcel + " to path " + getPathString(path));
                 parcel.setPath(path);
+                parcel.setDriverIdSet(getDriverIdSet(path));
                 path.setColor(this, 6);
                 int numOffers = updateOffers(path, parcel);
                 parcel.setNumOffers(numOffers);
@@ -171,7 +176,51 @@ public class TimeExpandedGraph extends StationGraph {
         }
     }
 
-    //TODO find first outgoing vertex
+    private IntSet getDriverIdSet(Path path) {
+        IntSet driverIdSet = new IntHashSet();
+        IntArrayList verticesList = IntArrayList.newInstance();
+
+        for (int i = 0; i < path.getNumberOfVertices(); i++) {
+            int currentVertexId = path.getVertexAt(i);
+            driverIdSet.add(driverConfig.getDriverIdByOfferId(nodeOfferIdProperty.getValueAsInt(currentVertexId)));
+        }
+        return driverIdSet;
+    }
+
+    /**
+     * Remove internal vertices in the path,
+     * i.e., vertices that are not connect to other vertices in different station
+     */
+    private Path getCompactPath(Path path) {
+        IntArrayList verticesList = IntArrayList.newInstance();
+
+        for (int i = 0; i < path.getNumberOfVertices(); i++) {
+            int currentVertexId = path.getVertexAt(i);
+            boolean isExternal = false;
+
+            // check the following vertex
+            if(i != path.getNumberOfVertices() - 1){
+                isExternal = isExternalVertex(currentVertexId, path.getVertexAt(i + 1));
+            }
+            // check the previous vertex
+            if(!isExternal && i != 0){
+                isExternal = isExternalVertex(currentVertexId, path.getVertexAt(i - 1));
+            }
+
+            if(isExternal){
+                verticesList.add(currentVertexId);
+            }
+        }
+
+        Path compactPath = new ArrayPath(verticesList.toArray());
+        return compactPath;
+    }
+
+    private boolean isExternalVertex(int currentVertexId, int vertexIdtoCompare) {
+        return nodeStationIdProperty.getValueAsInt(currentVertexId) !=
+                nodeStationIdProperty.getValueAsInt(vertexIdtoCompare);
+    }
+
     private int getNextVertexId(TimeTable timetable, int startTime, int prevTimeVertex, int volume) {
         int startVertexId;
         if(prevTimeVertex == -1){
@@ -406,5 +455,16 @@ public class TimeExpandedGraph extends StationGraph {
         int stationId = nodeStationIdProperty.getValueAsInt(timeVertexId);
         int offerId = nodeOfferIdProperty.getValueAsInt(timeVertexId);
         return String.format("v%d_s%d_o%d@%d", timeVertexId, stationId, offerId, time);
+    }
+
+    public void clear(){
+        super.clear();
+        nodeTimeProperty.unsetItAll();
+        nodeStationIdProperty.unsetItAll();
+        nodeOfferIdProperty.unsetItAll();
+        nodeLabelProperty.unsetItAll();
+        stationTimeTableMap.clear();
+        markRemovedOfferIds.clear();
+        assignmentMap.clear();
     }
 }

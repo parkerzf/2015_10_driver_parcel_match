@@ -9,7 +9,7 @@ import java.io.IOException;
 /**
  * Test application
  */
-public class AppDataPreparation {
+public class ShoretestPathDistanceGen {
     public static void main(String[] args) throws IOException, WriteException, BiffException {
         String confFilePath = "Data.xls";
         if(args.length == 1){
