@@ -29,7 +29,7 @@ public class ParcelConfig {
 
     private int[] parcelIndices;
 
-    public ParcelConfig(int numParcels, ExcelReader excelReader, boolean isRandom) {
+    public ParcelConfig(int numParcels, ExcelReader excelReader, boolean isRandom, int[] parcelIndicesIn) {
 
         String[] idStrArray;
         String[] startStationArray;
@@ -66,9 +66,21 @@ public class ParcelConfig {
                 Integer next = rand.nextInt(1000) + 1;
                 generated.add(next);
             }
+            if(parcelIndicesIn != null){
+                parcelIndices = parcelIndicesIn;
+            }
+            else{
+                parcelIndices = generated.toArray();
+            }
+//            parcelIndices = new int[]{664,896,82,488,201,267,1000,853,657,408,262,992,367,715,152,268,519,587,747,951,881,327,360,851,292,410,157,841,806,629};
+//            parcelIndices = new int[]{532,988,82,425,545,442,371,976,62,1000,467,754,186,367,997,256,122,521,112,171,482,966,184,3,804,560,373,169,693,955};
+//            parcelIndices = new int[]{46,946,896,82,612,437,942,514,589,789,787,446,870,518,114,842,167,802,670,529,604,737,481,334,783,48,218,563,939,972};
+//            parcelIndices = new int[]{46,970,445,845,56,285,372,880,776,546,818,509,89,354,416,256,614,675,280,565,489,495,863,380,714,48,615,155,393,254};
+//            parcelIndices = new int[]{811,445,337,463,129,612,168,335,378,25,432,494,767,53,24,672,734,469,802,769,792,737,159,644,529,331,481,174,225,539};
+//            parcelIndices = new int[]{623,423,850,859,534,213,385,330,562,583,653,768,381,710,208,303,993,727,597,722,233,317,12,813,673,492,947,292,910,393};
+//            parcelIndices = new int[]{431,831,392,257,488,921,319,913,4,207,440,478,969,183,662,633,295,93,915,805,792,353,769,515,678,52,35,374,133,191};
+//            parcelIndices = new int[]{397,916,26,988,996,153,161,974,437,914,791,740,715,115,587,769,350,869,461,565,495,472,647,147,470,759,829,819,806,994};
 
-            parcelIndices = generated.toArray();
-            //parcelIndices = new int[]{252,58,178,594,208,5,987,908,682,92,42,475,229,527,245,40,345,606,668,854,598,486,653,394,265,239,680,907,814,755,168,118,388,368,555,339,970,333,615,635,228,859,113,923,666,705,718,219,261,675,62,468,828,647,144,652,752,220,23,874,622,643,37,478,827,163,768,663,837,591,724,156,893,743,465,831,494,503,214,204,678,686,690,904,738,684,170,320,378,485};
 
             for(int i = 0; i < numParcels; i++){
                 idStrArray[i] = excelReader.xlsread("Input", 12, parcelIndices[i]);
@@ -110,8 +122,8 @@ public class ParcelConfig {
         return parcelMap;
     }
 
-    public int getTotalShippingCost(){
-        int totalShippingCost = 0;
+    public double getTotalShippingCost(){
+        double totalShippingCost = 0;
         for(Parcel parcel: parcelSortedList){
             totalShippingCost += parcel.getShippingCompanyCost();
         }
@@ -120,16 +132,19 @@ public class ParcelConfig {
     }
 
 
-    public IntSet getAssignedDriverIdSetAndReset() {
+    public IntSet getAssignedDriverIdSet() {
         IntSet assignedDriverIdSet = new IntOpenHashSet();
         for(Parcel parcel: parcelSortedList){
-            if(parcel.getDriverIdSet() == null) continue;
-            for(IntCursor driverIdCursor: parcel.getDriverIdSet()){
+            if(parcel.getPath() == null) continue;
+            for (IntCursor driverIdCursor : parcel.getDriverIdSet()) {
                 assignedDriverIdSet.add(driverIdCursor.value);
             }
-            parcel.reset();
         }
         return assignedDriverIdSet;
+    }
+
+    public void reset(){
+        parcelSortedList.forEach(nl.twente.bms.model.elem.Parcel::reset);
     }
 
     public int[] getParcelIndices() {

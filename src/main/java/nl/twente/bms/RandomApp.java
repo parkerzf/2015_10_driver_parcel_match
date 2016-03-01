@@ -17,6 +17,9 @@ public class RandomApp {
         int numParcels = -1;
         double detour = -1;
         boolean isRandom = false;
+        String driverIndicesStr = null;
+        String parcelIndicesStr = null;
+
         if(args.length == 1){
             confFilePath = args[0];
         }
@@ -50,47 +53,105 @@ public class RandomApp {
             detour = Double.parseDouble(args[4]);
             isRandom = Boolean.parseBoolean(args[5]);
         }
+        else if(args.length == 8){
+            confFilePath = args[0];
+            numIter = Integer.parseInt(args[1]);
+            numDrivers = Integer.parseInt(args[2]);
+            numParcels = Integer.parseInt(args[3]);
+            detour = Double.parseDouble(args[4]);
+            isRandom = Boolean.parseBoolean(args[5]);
+            driverIndicesStr = args[6];
+            parcelIndicesStr = args[7];
+        }
 
+
+        System.out.println("##########  Configurations:");
         System.out.println("confFilePath: " + confFilePath);
+        System.out.println("# Iterations: " + numIter);
         System.out.println("numDrivers: " + numDrivers);
         System.out.println("numParcels: " + numParcels);
         System.out.println("detour: " + detour);
         System.out.println("isRandom: " + isRandom);
+        System.out.println("driverIndicesStr: " + driverIndicesStr);
+        System.out.println("parcelIndicesStr: " + parcelIndicesStr);
 
         ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
 
 
-        Long globalStart = System.currentTimeMillis();
+        long globalStart = System.currentTimeMillis();
+
 
         int i = 1;
-        System.out.println("Iteration: " + i);
+
         long start = System.currentTimeMillis();
-        MatchingModel model = new MatchingModel(confFilePath, numDrivers, numParcels, detour, isRandom);
+        MatchingModel model = new MatchingModel(confFilePath, numDrivers, numParcels,
+                detour, isRandom, driverIndicesStr, parcelIndicesStr);
+        model.showDriversAndParcels();
+
+        System.out.println("##########  Iteration 1:");
         model.solve();
         long end = System.currentTimeMillis();
-        double bestCost = model.computeCost();
+        double initCost = model.computeCost();
+        double bestCost = initCost;
         int bestIter = i;
-        model.display(true);
 
-        System.out.println("Iteration " + i +" running time: " + (end - start) + "ms");
+        System.out.println("Iteration 1 running time: " + (end - start) + "ms");
+
+        double totalShippingCost = model.getParcelConfig().getTotalShippingCost();
+        System.out.println("Objective value: " + bestCost);
+        System.out.println("Worst case value: " + totalShippingCost);
+        System.out.println(String.format("Saving: %.2f%%", (totalShippingCost - bestCost)*100/totalShippingCost));
 
 
+        System.out.println("########## Constrained Random: ");
         while(++i <= numIter){
-            model.shuffle();
+            model.shuffle(false);
             model.solve();
             double cost = model.computeCost();
             if(cost < bestCost){
+                System.out.println(i + "\t" + cost);
                 bestCost = cost;
                 bestIter = i;
             }
         }
 
-        Long globalEnd = System.currentTimeMillis();
+
+        long globalEnd = System.currentTimeMillis();
         System.out.println("Model running time: " + (globalEnd - globalStart) + "ms");
 
 
         System.out.println("Best model result is Iteration: " + bestIter);
-        double totalShippingCost = model.getParcelConfig().getTotalShippingCost();
+        totalShippingCost = model.getParcelConfig().getTotalShippingCost();
+        System.out.println("Objective value: " + bestCost);
+        System.out.println("Worst case value: " + totalShippingCost);
+        System.out.println(String.format("Saving: %.2f%%", (totalShippingCost - bestCost)*100/totalShippingCost));
+
+
+
+        System.out.println("########### Full Random: ");
+        globalStart = System.currentTimeMillis();
+        i = 1;
+
+        bestCost = initCost;
+        bestIter = i;
+
+        while(++i <= numIter * 10){
+            model.shuffle(true);
+            model.solve();
+            double cost = model.computeCost();
+            if(cost < bestCost){
+                System.out.println(i + "\t" + cost);
+                bestCost = cost;
+                bestIter = i;
+            }
+        }
+
+        globalEnd = System.currentTimeMillis();
+        System.out.println("Model running time: " + (globalEnd - globalStart) + "ms");
+
+
+        System.out.println("Best model result is Iteration: " + bestIter);
+        totalShippingCost = model.getParcelConfig().getTotalShippingCost();
         System.out.println("Objective value: " + bestCost);
         System.out.println("Worst case value: " + totalShippingCost);
         System.out.println(String.format("Saving: %.2f%%", (totalShippingCost - bestCost)*100/totalShippingCost));

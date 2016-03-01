@@ -32,7 +32,7 @@ public class DriverConfig {
 
 
     public DriverConfig(int numDrivers, double detourInput, ExcelReader excelReader,
-                        StationGraph stationGraph, boolean isRandom) {
+                        StationGraph stationGraph, boolean isRandom, int[] driverIndicesIn) {
         nextOfferId = 0;
 
         double detour = detourInput;
@@ -77,8 +77,21 @@ public class DriverConfig {
                 generated.add(next);
             }
 
-            driverIndices = generated.toArray();
-            // driverIndices = new int[]{609, 854, 525, 869, 680, 432, 522, 297, 255, 915, 249, 463, 230, 29, 947};
+            if(driverIndicesIn != null){
+                driverIndices = driverIndicesIn;
+            }
+            else{
+                driverIndices = generated.toArray();
+            }
+            //driverIndices = generated.toArray();
+//            driverIndices = new int[]{768,8,350,144,428,180,622,815,388,951,28,980,828,47,266};
+//            driverIndices = new int[]{784,956,592,379,443,572,359,434,898,299,873,244,808,625,512};
+//            driverIndices = new int[]{95,283,663,398,436,905,78,263,427,834,789,744,238,917,117};
+//            driverIndices = new int[]{513,391,172,829,551,910,919,627,966,519,217,132,608,757,698};
+//            driverIndices = new int[]{938,683,440,2,819,177,844,461,387,840,453,162,289,613,750};
+//            driverIndices = new int[]{211,136,147,316,71,953,301,367,930,123,124,514,459,120,414};
+//            driverIndices = new int[]{706,796,394,237,477,560,165,734,412,15,740,280,221,991,755};
+//            driverIndices = new int[]{211,12,148,994,6,507,535,655,174,696,770,746,334,893,757};
 
             for(int i = 0; i < numDrivers; i++){
                 idStrArray[i] = excelReader.xlsread("Input", 3, driverIndices[i]);
@@ -116,26 +129,26 @@ public class DriverConfig {
     public void shuffleAndRebuildTimeExpandedGraph(StationGraph stationGraph, IntSet assignedDriverIdSet){
         nextOfferId = 0;
         offerMap.clear();
-        for (ObjectCursor<Driver> driver: driverList) {
-            driver.value.reset();
-            if(!assignedDriverIdSet.contains(driver.value.getId())){
-                driver.value.shuffle();
+        for (ObjectCursor<Driver> driverCursor: driverList) {
+            driverCursor.value.reset();
+            if(!assignedDriverIdSet.contains(driverCursor.value.getId())){
+                driverCursor.value.shuffle();
             }
         }
-        timeExpandedGraph.clear();
+//        timeExpandedGraph.clear();
         buildTimeExpandedGraph(stationGraph);
     }
 
     private void buildTimeExpandedGraph(StationGraph stationGraph){
         timeExpandedGraph = new TimeExpandedGraph(stationGraph, this);
-        for (ObjectCursor<Driver> driver: driverList) {
+        for (ObjectCursor<Driver> driverCursor: driverList) {
             int currentId = getNextOfferId();
-            Offer offer = driver.value.createInitOffer(currentId, stationGraph);
+            Offer offer = driverCursor.value.createInitOffer(currentId, stationGraph);
             offerMap.put(currentId, offer);
             timeExpandedGraph.addOffer(offer);
             logger.info(offer.toString());
         }
-        //         timeExpandedGraph.display();
+//        timeExpandedGraph.display();
     }
 
     public int getNextOfferId() {

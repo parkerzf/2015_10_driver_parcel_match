@@ -62,7 +62,7 @@ public class RandomGen {
 
         List<Weighting> weightings = new ArrayList<>();
         for(int i = 1; i < numCities + 1 ; i++){
-            String cityName = excelReader.xlsread("Blad1", 0, i);
+            String cityName = excelReader.xlsread("Blad1", 1, i);
             int weight = Integer.parseInt(excelReader.xlsread("Blad1", 3, i));
             weightings.add(new Weighting(cityName, weight));
         }

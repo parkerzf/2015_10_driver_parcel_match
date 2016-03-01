@@ -68,11 +68,11 @@ public class MatchingModel {
     }
 
     public MatchingModel(String confFilePath, int numDriversInput, int numParcelsInput, double detourInput) {
-        this(confFilePath, numDriversInput, numParcelsInput, detourInput, false);
+        this(confFilePath, numDriversInput, numParcelsInput, detourInput, false, null, null);
     }
 
     public MatchingModel(String confFilePath, int numDriversInput,
-                         int numParcelsInput, double detourInput, boolean isRandom) {
+                         int numParcelsInput, double detourInput, boolean isRandom, String driverIndicesStr, String parcelIndicesStr) {
         ExcelReader excelReader = new ExcelReader(confFilePath);
         id = Integer.parseInt(excelReader.xlsread("Input", 1, 15));
         numStations = Integer.parseInt(excelReader.xlsread("Input", 1, 2));
@@ -96,11 +96,26 @@ public class MatchingModel {
         else {
             detour = detourInput;
         }
+
+
         logger.info("id: {}", id);
         logger.info("numStations: {}", numStations);
         logger.info("numDrivers: {}", numDrivers);
         logger.info("numParcels: {}", numParcels);
         logger.info("detour: {}", detour);
+        logger.info("driverIndicesStr: {}", driverIndicesStr);
+        logger.info("parcelIndicesStr: {}", parcelIndicesStr);
+        int[] driverIndicesIn = null;
+        int[] parcelIndicesIn = null;
+        if(driverIndicesStr != null){
+            driverIndicesIn = Arrays.stream(driverIndicesStr.split(","))
+                    .map(String::trim).mapToInt(Integer::parseInt).toArray();
+        }
+
+        if(parcelIndicesStr != null){
+            parcelIndicesIn = Arrays.stream(parcelIndicesStr.split(","))
+                    .map(String::trim).mapToInt(Integer::parseInt).toArray();
+        }
 
         String[] weightSettings = excelReader.xlsread("Input", 1, 7, 11);
         weightTravelDistanceInKilometer = Double.parseDouble(weightSettings[0]);
@@ -116,14 +131,21 @@ public class MatchingModel {
         logger.info("weightExtraTime: {}", weightExtraTime);
 
         stationConfig = new StationConfig(numStations, excelReader);
-        driverConfig = new DriverConfig(numDrivers, detour, excelReader, stationConfig.getStationGraph(), isRandom);
-        parcelConfig = new ParcelConfig(numParcels, excelReader, isRandom);
+        driverConfig = new DriverConfig(numDrivers, detour, excelReader, stationConfig.getStationGraph(), isRandom, driverIndicesIn);
+        parcelConfig = new ParcelConfig(numParcels, excelReader, isRandom, parcelIndicesIn);
 
         excelReader.close();
     }
 
-    public void shuffle(){
-        IntSet assignedDriverIdSet = parcelConfig.getAssignedDriverIdSetAndReset();
+    public void shuffle(boolean isFullRandom){
+        IntSet assignedDriverIdSet;
+        if(isFullRandom){
+            assignedDriverIdSet = new IntOpenHashSet();
+        }
+        else{
+            assignedDriverIdSet = parcelConfig.getAssignedDriverIdSet();
+        }
+        parcelConfig.reset();
         driverConfig.shuffleAndRebuildTimeExpandedGraph(stationConfig.getStationGraph(), assignedDriverIdSet);
     }
 
@@ -225,25 +247,16 @@ public class MatchingModel {
     }
 
 
-    public void display(boolean isFirst) {
-        if(isFirst) {
-            System.out.println("Drivers: " + Arrays.toString(driverConfig.getDriverIndices()));
-            System.out.println("Drivers: ");
-            for (ObjectCursor<Driver> driver : driverConfig.getDriverList()) {
-                System.out.println(driver.value.getExecelOutoput());
-            }
-            System.out.println("Parcels: " + Arrays.toString(parcelConfig.getParcelIndices()));
-            System.out.println("Parcels: ");
-            for (IntObjectCursor<Parcel> parcel : parcelConfig.getParcelMap()) {
-                System.out.println(parcel.value.getExecelOutoput());
-            }
-        }
-
-        double objectValue = computeCost();
-        int totalShippingCost = getParcelConfig().getTotalShippingCost();
-
-        System.out.println("Objective value: " + objectValue);
-        System.out.println("Worst case value: " + totalShippingCost);
-        System.out.println(String.format("Saving: %.2f%%", (totalShippingCost - objectValue)*100/totalShippingCost));
+    public void showDriversAndParcels() {
+        System.out.println("Drivers: " + Arrays.toString(driverConfig.getDriverIndices()));
+//        System.out.println("Drivers: ");
+//        for (ObjectCursor<Driver> driver : driverConfig.getDriverList()) {
+//            System.out.println(driver.value.getExecelOutoput());
+//        }
+        System.out.println("Parcels: " + Arrays.toString(parcelConfig.getParcelIndices()));
+//        System.out.println("Parcels: ");
+//        for (Parcel parcel : parcelConfig.getParcelSortedList()) {
+//            System.out.println(parcel.getExecelOutoput());
+//        }
     }
 }

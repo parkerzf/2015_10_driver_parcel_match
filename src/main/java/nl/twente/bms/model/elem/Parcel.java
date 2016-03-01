@@ -106,8 +106,11 @@ public class Parcel implements Comparable<Parcel> {
         else{
             int realDistance = 0;
             for(int i = 0; i< path.getNumberOfVertices() - 1; i++){
-                int u = tGraph.getStationIdFromVertexId(path.getVertexAt(i));
-                int v = tGraph.getStationIdFromVertexId(path.getVertexAt(i+1));
+                int uTimeVertex = path.getVertexAt(i);
+                int vTimeVertex = path.getVertexAt(i + 1);
+                int u = tGraph.getStationIdFromVertexId(uTimeVertex);
+                int v = tGraph.getStationIdFromVertexId(vTimeVertex);
+
                 realDistance += stationGraph.getShortestDistance(u, v);
             }
             double distanceCost = 0.3 * weightTravelDistanceInKilometer * realDistance;

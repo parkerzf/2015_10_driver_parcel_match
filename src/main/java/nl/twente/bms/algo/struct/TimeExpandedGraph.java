@@ -178,7 +178,6 @@ public class TimeExpandedGraph extends StationGraph {
 
     private IntSet getDriverIdSet(Path path) {
         IntSet driverIdSet = new IntHashSet();
-        IntArrayList verticesList = IntArrayList.newInstance();
 
         for (int i = 0; i < path.getNumberOfVertices(); i++) {
             int currentVertexId = path.getVertexAt(i);
@@ -216,9 +215,9 @@ public class TimeExpandedGraph extends StationGraph {
         return compactPath;
     }
 
-    private boolean isExternalVertex(int currentVertexId, int vertexIdtoCompare) {
+    private boolean isExternalVertex(int currentVertexId, int vertexIdToCompare) {
         return nodeStationIdProperty.getValueAsInt(currentVertexId) !=
-                nodeStationIdProperty.getValueAsInt(vertexIdtoCompare);
+                nodeStationIdProperty.getValueAsInt(vertexIdToCompare);
     }
 
     private int getNextVertexId(TimeTable timetable, int startTime, int prevTimeVertex, int volume) {

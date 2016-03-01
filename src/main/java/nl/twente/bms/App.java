@@ -42,22 +42,30 @@ public class App {
             isRandom = Boolean.parseBoolean(args[4]);
         }
 
-        System.out.println("confFilePath: " + confFilePath);
-        System.out.println("numDrivers: " + numDrivers);
-        System.out.println("numParcels: " + numParcels);
-        System.out.println("detour: " + detour);
-        System.out.println("isRandom: " + isRandom);
+//        System.out.println("confFilePath: " + confFilePath);
+//        System.out.println("numDrivers: " + numDrivers);
+//        System.out.println("numParcels: " + numParcels);
+//        System.out.println("detour: " + detour);
+//        System.out.println("isRandom: " + isRandom);
 
         ClassLoader.getSystemClassLoader().setDefaultAssertionStatus(true);
 
         long start = System.currentTimeMillis();
-        MatchingModel model = new MatchingModel(confFilePath, numDrivers, numParcels, detour, isRandom);
-        model.solve();
+        MatchingModel model = new MatchingModel(confFilePath, numDrivers, numParcels, detour, isRandom, null, null);
+//        model.solve();
         long end = System.currentTimeMillis();
+//        System.out.println("Model running time: " + (end - start) + "ms");
 
-        model.display(true);
+        model.showDriversAndParcels();
 
-        System.out.println("Model running time: " + (end - start) + "ms");
+
+//        double cost =  model.computeCost();
+//        double totalShippingCost = model.getParcelConfig().getTotalShippingCost();
+//        System.out.println("Objective value: " + cost);
+//        System.out.println("Worst case value: " + totalShippingCost);
+//        System.out.println(String.format("Saving: %.2f%%", (totalShippingCost - cost)*100/totalShippingCost));
+
+
 
     }
 }
