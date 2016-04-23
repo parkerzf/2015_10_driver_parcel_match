@@ -135,7 +135,7 @@ public class RandomApp {
         bestCost = initCost;
         bestIter = i;
 
-        while(++i <= numIter * 10){
+        while(++i <= numIter * 4){
             model.shuffle(true);
             model.solve();
             double cost = model.computeCost();
