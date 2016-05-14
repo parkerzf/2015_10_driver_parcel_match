@@ -24,3 +24,5 @@ target
 *.mine
 src/main/resources/*
 *.xls
+*.sh
+*.txt
